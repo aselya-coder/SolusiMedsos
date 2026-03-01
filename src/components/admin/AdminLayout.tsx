@@ -75,7 +75,7 @@ const AdminLayout = () => {
         lg:translate-x-0 fixed lg:static inset-0 z-40 w-64 bg-background border-r transition-transform duration-200 ease-in-out flex flex-col
       `}>
         <div className="p-6 border-b hidden lg:block">
-          <span className="font-bold text-xl text-primary">Admin Panel</span>
+          <span className="font-bold text-xl text-primary">Admin SolusiMedsos</span>
         </div>
         <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => (
