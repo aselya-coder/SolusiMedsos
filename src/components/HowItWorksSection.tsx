@@ -10,6 +10,15 @@ const iconMap: Record<string, any> = {
   CheckCircle,
 };
 
+// Data default tetap ada di file ini agar tidak terhapus
+const DEFAULT_STEPS = [
+  { icon_name: "MessageSquare", title: "Konsultasi", description: "Diskusi kebutuhan dan tujuan campaign Anda bersama tim kami.", step_number: 1 },
+  { icon_name: "Search", title: "Analisa Target", description: "Riset mendalam terhadap target audiens dan strategi optimal.", step_number: 2 },
+  { icon_name: "Rocket", title: "Eksekusi Campaign", description: "Jalankan campaign dengan jaringan akun real dan terkoordinasi.", step_number: 3 },
+  { icon_name: "BarChart3", title: "Monitoring & Reporting", description: "Pantau progress real-time dengan laporan berkala.", step_number: 4 },
+  { icon_name: "CheckCircle", title: "Evaluasi", description: "Analisa hasil dan rekomendasi untuk campaign selanjutnya.", step_number: 5 },
+];
+
 interface StepData {
   icon_name: string;
   title: string;
@@ -19,11 +28,18 @@ interface StepData {
 
 const HowItWorksSection = () => {
   const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: steps, loading } = useFetchData<StepData[]>("how_it_works", { orderBy: "display_order" });
+  const { data: fetchedSteps, loading } = useFetchData<StepData[]>("how_it_works", { orderBy: "display_order" });
+
+  const header = allHeaders?.find(h => h.section_key === 'how_it_works') || {
+    badge_text: "Cara Kerja",
+    title_part1: "Proses yang",
+    title_gradient: "Terstruktur"
+  };
+
+  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_STEPS
+  const displaySteps = (fetchedSteps && fetchedSteps.length > 0) ? fetchedSteps : DEFAULT_STEPS;
 
   if (loading) return null;
-
-  const header = allHeaders?.find(h => h.section_key === 'how_it_works');
 
   return (
     <section id="how-it-works" className="py-20 lg:py-32 bg-muted/30">
@@ -34,10 +50,10 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header?.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header?.title_part1}{" "}
-            <span className="gradient-text">{header?.title_gradient}</span>
+            {header.title_part1}{" "}
+            <span className="gradient-text">{header.title_gradient}</span>
           </h2>
         </motion.div>
 
@@ -46,7 +62,7 @@ const HowItWorksSection = () => {
           <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-border -translate-y-1/2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
-            {steps?.map((step, i) => {
+            {displaySteps.map((step, i) => {
               const IconComponent = iconMap[step.icon_name] || Search;
               return (
                 <motion.div

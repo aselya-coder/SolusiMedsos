@@ -3,6 +3,38 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFetchData } from "@/hooks/useFetchData";
 
+// Data default tetap ada di file ini agar tidak terhapus
+const DEFAULT_SERVICES = [
+  {
+    title: "Jasa Buzzer Twitter (X)",
+    description: "Dominasi percakapan di Twitter/X dengan jaringan akun real yang siap mendukung campaign Anda.",
+    benefits: ["Trending organik", "Engagement tinggi", "Targeting keyword"],
+    cta_text: "Pesan Sekarang",
+    cta_link: "#"
+  },
+  {
+    title: "Jasa Buzzer Instagram",
+    description: "Tingkatkan visibility brand di Instagram melalui likes, komentar, dan share dari akun berkualitas.",
+    benefits: ["Boost engagement", "Real followers", "Story & reels support"],
+    cta_text: "Pesan Sekarang",
+    cta_link: "#"
+  },
+  {
+    title: "Jasa Buzzer TikTok",
+    description: "Viralkan konten TikTok Anda dengan dukungan views, likes, dan komentar dari akun aktif.",
+    benefits: ["FYP strategy", "Mass engagement", "Konten viral"],
+    cta_text: "Pesan Sekarang",
+    cta_link: "#"
+  },
+  {
+    title: "Trending Topic Campaign",
+    description: "Buat topik trending secara organik di platform sosial media pilihan Anda.",
+    benefits: ["Trending nasional", "Multi-platform", "Real-time monitoring"],
+    cta_text: "Pesan Sekarang",
+    cta_link: "#"
+  },
+];
+
 interface ServiceData {
   title: string;
   description: string;
@@ -19,13 +51,21 @@ interface HeaderData {
 
 const ServicesSection = () => {
   const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: services, loading } = useFetchData<ServiceData[]>("services", { orderBy: "display_order" });
+  const { data: fetchedServices, loading } = useFetchData<ServiceData[]>("services", { orderBy: "display_order" });
   const { data: wsData } = useFetchData<any>("whatsapp_settings", { single: true });
 
-  if (loading) return null;
+  const header = allHeaders?.find(h => h.section_key === 'services') || {
+    badge_text: "Layanan Kami",
+    title_part1: "Solusi Lengkap untuk",
+    title_gradient: "Campaign Digital"
+  };
 
-  const header = allHeaders?.find(h => h.section_key === 'services');
   const phoneNumber = wsData?.phone_number || "6285646420488";
+
+  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_SERVICES
+  const displayServices = (fetchedServices && fetchedServices.length > 0) ? fetchedServices : DEFAULT_SERVICES;
+
+  if (loading) return null;
 
   return (
     <section id="services" className="py-20 lg:py-32 bg-muted/30">
@@ -36,15 +76,15 @@ const ServicesSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header?.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header?.title_part1}{" "}
-            <span className="gradient-text">{header?.title_gradient}</span>
+            {header.title_part1}{" "}
+            <span className="gradient-text">{header.title_gradient}</span>
           </h2>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {services?.map((service, i) => {
+          {displayServices?.map((service, i) => {
             const waMessage = encodeURIComponent(`Halo SolusiMedsos, saya ingin bertanya tentang layanan ${service.title}.`);
             const waUrl = `https://wa.me/${phoneNumber}?text=${waMessage}`;
             

@@ -2,6 +2,34 @@ import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { useFetchData } from "@/hooks/useFetchData";
 
+// Data default tetap ada di file ini agar tidak terhapus
+const DEFAULT_TESTIMONIALS = [
+  {
+    name: "Direktur Marketing",
+    company: "PT. *** Indonesia",
+    content: "Campaign yang dijalankan sangat efektif. Engagement naik 300% dalam waktu 1 minggu. Tim sangat profesional dan responsif.",
+    rating: 5,
+  },
+  {
+    name: "Tim Sukses",
+    company: "Partai ***",
+    content: "Strategi buzzer untuk kampanye politik kami berjalan mulus dan terkoordinasi. Elektabilitas kandidat naik signifikan.",
+    rating: 5,
+  },
+  {
+    name: "Owner UMKM",
+    company: "Brand Fashion Lokal",
+    content: "Produk kami viral di TikTok berkat campaign dari tim ini. Penjualan meningkat 5x lipat. Sangat recommended!",
+    rating: 5,
+  },
+  {
+    name: "Public Relations",
+    company: "Perusahaan BUMN",
+    content: "Manajemen opini publik yang sangat terukur. Berhasil meredam isu negatif dan membangun narasi positif.",
+    rating: 5,
+  },
+];
+
 interface TestimonialData {
   name: string;
   company: string;
@@ -11,11 +39,18 @@ interface TestimonialData {
 
 const TestimonialsSection = () => {
   const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: testimonials, loading } = useFetchData<TestimonialData[]>("testimonials", { orderBy: "display_order" });
+  const { data: fetchedTestimonials, loading } = useFetchData<TestimonialData[]>("testimonials", { orderBy: "display_order" });
+
+  const header = allHeaders?.find(h => h.section_key === 'testimonials') || {
+    badge_text: "Testimoni",
+    title_part1: "Dipercaya oleh",
+    title_gradient: "Ratusan Klien"
+  };
+
+  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_TESTIMONIALS
+  const displayTestimonials = (fetchedTestimonials && fetchedTestimonials.length > 0) ? fetchedTestimonials : DEFAULT_TESTIMONIALS;
 
   if (loading) return null;
-
-  const header = allHeaders?.find(h => h.section_key === 'testimonials');
 
   return (
     <section id="testimonials" className="py-20 lg:py-32">
@@ -26,15 +61,15 @@ const TestimonialsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header?.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header?.title_part1}{" "}
-            <span className="gradient-text">{header?.title_gradient}</span>
+            {header.title_part1}{" "}
+            <span className="gradient-text">{header.title_gradient}</span>
           </h2>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {testimonials?.map((t, i) => (
+          {displayTestimonials?.map((t, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFetchData } from "@/hooks/useFetchData";
+import heroBg from "@/assets/hero-bg.jpg";
 
 interface HeroData {
   badge_text: string;
@@ -16,23 +17,34 @@ interface HeroData {
   background_image_url?: string;
 }
 
+const DEFAULT_HERO = {
+  badge_text: "#1 Agency Buzzer Terpercaya di Indonesia",
+  title_part1: "Solusi Jasa Buzzer &",
+  title_gradient: "Campaign Sosial Media",
+  title_part2: "Terpercaya",
+  subtitle: "Tingkatkan branding, engagement, dan opini publik dengan strategi digital yang terukur dan aman.",
+  primary_btn_text: "Konsultasi Sekarang",
+  primary_btn_link: "https://wa.me/6281234567890",
+  secondary_btn_text: "Lihat Paket Harga",
+  secondary_btn_link: "#pricing",
+};
+
 const HeroSection = () => {
-  const { data: heroData, loading: heroLoading } = useFetchData<HeroData>("hero_section", { single: true });
+  const { data: fetchedHero, loading: heroLoading } = useFetchData<HeroData>("hero_section", { single: true });
   const { data: wsData } = useFetchData<any>("whatsapp_settings", { single: true });
 
-  if (heroLoading) return null;
-
+  const heroData = fetchedHero || DEFAULT_HERO;
   const phoneNumber = wsData?.phone_number || "6285646420488";
   const waMessage = encodeURIComponent(`Halo SolusiMedsos, saya ingin konsultasi mengenai campaign.`);
   const waUrl = `https://wa.me/${phoneNumber}?text=${waMessage}`;
+
+  if (heroLoading) return null;
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden pt-20">
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        {heroData?.background_image_url && (
-          <img src={heroData.background_image_url} alt="" className="w-full h-full object-cover opacity-40" />
-        )}
+        <img src={heroData.background_image_url || heroBg} alt="" className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
       </div>
 
@@ -44,7 +56,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
-              {heroData?.badge_text}
+              {heroData.badge_text}
             </span>
           </motion.div>
 
@@ -54,9 +66,9 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-7xl font-heading font-bold leading-tight mb-6 text-balance"
           >
-            {heroData?.title_part1}{" "}
-            <span className="gradient-text">{heroData?.title_gradient}</span>{" "}
-            {heroData?.title_part2}
+            {heroData.title_part1}{" "}
+            <span className="gradient-text">{heroData.title_gradient}</span>{" "}
+            {heroData.title_part2}
           </motion.h1>
 
           <motion.p
@@ -65,7 +77,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg lg:text-xl text-muted-foreground max-w-2xl mb-10"
           >
-            {heroData?.subtitle}
+            {heroData.subtitle}
           </motion.p>
 
           <motion.div
@@ -80,7 +92,7 @@ const HeroSection = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-8 animate-pulse-glow"
             >
               <a href={waUrl} target="_blank" rel="noopener noreferrer">
-                {heroData?.primary_btn_text}
+                {heroData.primary_btn_text}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
             </Button>
@@ -90,9 +102,9 @@ const HeroSection = () => {
               size="lg"
               className="border-border text-foreground hover:bg-muted font-semibold text-base px-8"
             >
-              <a href={heroData?.secondary_btn_link}>
+              <a href={heroData.secondary_btn_link}>
                 <Play className="mr-2 h-4 w-4" />
-                {heroData?.secondary_btn_text}
+                {heroData.secondary_btn_text}
               </a>
             </Button>
           </motion.div>

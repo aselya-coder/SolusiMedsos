@@ -3,6 +3,23 @@ import { Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFetchData } from "@/hooks/useFetchData";
 
+// Data default tetap ada di file ini agar tidak terhapus
+const DEFAULT_PLANS = [
+  { id: 101, name: "Basic", price: "Mulai 1.5 Jt", is_popular: false },
+  { id: 102, name: "Professional", price: "Mulai 5 Jt", is_popular: true },
+  { id: 103, name: "Premium", price: "Mulai 15 Jt", is_popular: false },
+  { id: 104, name: "Custom Campaign", price: "Hubungi Kami", is_popular: false },
+];
+
+const DEFAULT_FEATURES = [
+  { pricing_id: 101, feature: "50 Akun Buzzer" },
+  { pricing_id: 101, feature: "Durasi 3 Hari" },
+  { pricing_id: 102, feature: "200 Akun Buzzer" },
+  { pricing_id: 102, feature: "Durasi 7 Hari" },
+  { pricing_id: 103, feature: "500+ Akun Buzzer" },
+  { pricing_id: 104, feature: "Akun Unlimited" },
+];
+
 interface PricingData {
   id: number;
   name: string;
@@ -17,14 +34,23 @@ interface FeatureData {
 
 const PricingSection = () => {
   const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: plans, loading: pricingLoading } = useFetchData<PricingData[]>("pricing", { orderBy: "display_order" });
-  const { data: allFeatures, loading: featuresLoading } = useFetchData<FeatureData[]>("pricing_features", { orderBy: "display_order" });
+  const { data: fetchedPlans, loading: pricingLoading } = useFetchData<PricingData[]>("pricing", { orderBy: "display_order" });
+  const { data: fetchedFeatures, loading: featuresLoading } = useFetchData<FeatureData[]>("pricing_features", { orderBy: "display_order" });
   const { data: wsData } = useFetchData<any>("whatsapp_settings", { single: true });
 
-  if (pricingLoading || featuresLoading) return null;
+  const header = allHeaders?.find(h => h.section_key === 'pricing') || {
+    badge_text: "Paket Harga",
+    title_part1: "Pilih Paket yang",
+    title_gradient: "Sesuai Kebutuhan"
+  };
 
-  const header = allHeaders?.find(h => h.section_key === 'pricing');
   const phoneNumber = wsData?.phone_number || "6285646420488";
+
+  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_PLANS
+  const displayPlans = (fetchedPlans && fetchedPlans.length > 0) ? fetchedPlans : DEFAULT_PLANS;
+  const displayFeatures = (fetchedFeatures && fetchedFeatures.length > 0) ? fetchedFeatures : DEFAULT_FEATURES;
+
+  if (pricingLoading || featuresLoading) return null;
 
   return (
     <section id="pricing" className="py-20 lg:py-32">
@@ -35,16 +61,16 @@ const PricingSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header?.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header?.title_part1}{" "}
-            <span className="gradient-text">{header?.title_gradient}</span>
+            {header.title_part1}{" "}
+            <span className="gradient-text">{header.title_gradient}</span>
           </h2>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {plans?.map((plan, i) => {
-            const features = allFeatures?.filter(f => f.pricing_id === plan.id) || [];
+          {displayPlans?.map((plan, i) => {
+            const features = displayFeatures?.filter(f => f.pricing_id === plan.id) || [];
             const waMessage = encodeURIComponent(`Halo SolusiMedsos, saya ingin memesan paket ${plan.name}.`);
             const waUrl = `https://wa.me/${phoneNumber}?text=${waMessage}`;
 
