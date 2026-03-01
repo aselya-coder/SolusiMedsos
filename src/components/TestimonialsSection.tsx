@@ -1,34 +1,19 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { useFetchData } from "@/hooks/useFetchData";
 
-const testimonials = [
-  {
-    name: "Direktur Marketing",
-    company: "PT. *** Indonesia",
-    text: "Campaign yang dijalankan sangat efektif. Engagement naik 300% dalam waktu 1 minggu. Tim sangat profesional dan responsif.",
-    rating: 5,
-  },
-  {
-    name: "Tim Sukses",
-    company: "Partai ***",
-    text: "Strategi buzzer untuk kampanye politik kami berjalan mulus dan terkoordinasi. Elektabilitas kandidat naik signifikan.",
-    rating: 5,
-  },
-  {
-    name: "Owner UMKM",
-    company: "Brand Fashion Lokal",
-    text: "Produk kami viral di TikTok berkat campaign dari tim ini. Penjualan meningkat 5x lipat. Sangat recommended!",
-    rating: 5,
-  },
-  {
-    name: "Public Relations",
-    company: "Perusahaan BUMN",
-    text: "Manajemen opini publik yang sangat terukur. Berhasil meredam isu negatif dan membangun narasi positif.",
-    rating: 5,
-  },
-];
+interface TestimonialData {
+  name: string;
+  company: string;
+  content: string;
+  rating: number;
+}
 
 const TestimonialsSection = () => {
+  const { data: testimonials, loading } = useFetchData<TestimonialData[]>("testimonials", { orderBy: "display_order" });
+
+  if (loading) return null;
+
   return (
     <section id="testimonials" className="py-20 lg:py-32">
       <div className="section-container">
@@ -46,7 +31,7 @@ const TestimonialsSection = () => {
         </motion.div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {testimonials.map((t, i) => (
+          {testimonials?.map((t, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -56,7 +41,7 @@ const TestimonialsSection = () => {
               className="card-gradient rounded-lg border border-border p-6 hover-lift"
             >
               <Quote className="h-8 w-8 text-primary/30 mb-4" />
-              <p className="text-foreground mb-6 leading-relaxed">{t.text}</p>
+              <p className="text-foreground mb-6 leading-relaxed">{t.content}</p>
               <div className="flex items-center gap-1 mb-3">
                 {Array.from({ length: t.rating }).map((_, j) => (
                   <Star key={j} className="h-4 w-4 fill-primary text-primary" />

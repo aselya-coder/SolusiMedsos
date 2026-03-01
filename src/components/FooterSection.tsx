@@ -1,6 +1,31 @@
-import { Mail, Phone, Instagram, MessageCircle } from "lucide-react";
+import { Mail, Instagram, MessageCircle } from "lucide-react";
+import { useFetchData } from "@/hooks/useFetchData";
+
+interface FooterData {
+  brand_name_part1: string;
+  brand_name_part2: string;
+  description: string;
+  copyright_text: string;
+  email: string;
+  phone: string;
+  instagram_username: string;
+}
+
+interface FooterLinkData {
+  label: string;
+  href: string;
+  category: string;
+}
 
 const FooterSection = () => {
+  const { data: footerData, loading: footerLoading } = useFetchData<FooterData>("footer", { single: true });
+  const { data: footerLinks, loading: linksLoading } = useFetchData<FooterLinkData[]>("footer_links", { orderBy: "display_order" });
+
+  if (footerLoading || linksLoading) return null;
+
+  const navigasiLinks = footerLinks?.filter(l => l.category === 'Navigasi') || [];
+  const layananLinks = footerLinks?.filter(l => l.category === 'Layanan') || [];
+
   return (
     <footer className="border-t border-border py-16">
       <div className="section-container">
@@ -8,11 +33,11 @@ const FooterSection = () => {
           {/* Brand */}
           <div>
             <div className="font-heading text-xl font-bold mb-4">
-              <span className="gradient-text">Solusi</span>
-              <span className="text-foreground">Medsos</span>
+              <span className="gradient-text">{footerData?.brand_name_part1}</span>
+              <span className="text-foreground">{footerData?.brand_name_part2}</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Agency jasa buzzer & social media campaign terpercaya di Indonesia. Solusi digital marketing untuk brand, politik, dan personal branding.
+              {footerData?.description}
             </p>
           </div>
 
@@ -20,10 +45,9 @@ const FooterSection = () => {
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Navigasi</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
-              <li><a href="#services" className="hover:text-primary transition-colors">Layanan</a></li>
-              <li><a href="#pricing" className="hover:text-primary transition-colors">Harga</a></li>
-              <li><a href="#faq" className="hover:text-primary transition-colors">FAQ</a></li>
+              {navigasiLinks.map((link, idx) => (
+                <li key={idx}><a href={link.href} className="hover:text-primary transition-colors">{link.label}</a></li>
+              ))}
             </ul>
           </div>
 
@@ -31,10 +55,9 @@ const FooterSection = () => {
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Layanan</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Buzzer Twitter/X</li>
-              <li>Buzzer Instagram</li>
-              <li>Buzzer TikTok</li>
-              <li>Campaign Politik</li>
+              {layananLinks.map((link, idx) => (
+                <li key={idx}><a href={link.href} className="hover:text-primary transition-colors">{link.label}</a></li>
+              ))}
             </ul>
           </div>
 
@@ -44,15 +67,15 @@ const FooterSection = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
-                <a href="https://wa.me/6281234567890" className="hover:text-primary transition-colors">WhatsApp</a>
+                <a href={`https://wa.me/${footerData?.phone}`} className="hover:text-primary transition-colors">WhatsApp</a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>info@solusimedsos.id</span>
+                <span>{footerData?.email}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Instagram className="h-4 w-4 text-primary" />
-                <span>@solusimedsos</span>
+                <span>@{footerData?.instagram_username}</span>
               </li>
             </ul>
           </div>
@@ -60,7 +83,7 @@ const FooterSection = () => {
 
         <div className="border-t border-border mt-12 pt-8 text-center">
           <p className="text-xs text-muted-foreground">
-            © 2025 SolusiMedsos. All rights reserved. Disclaimer: Semua layanan yang kami berikan bersifat profesional dan bertanggung jawab.
+            {footerData?.copyright_text}
           </p>
         </div>
       </div>
