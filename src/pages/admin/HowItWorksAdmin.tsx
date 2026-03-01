@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { SectionHeaderAdmin } from "@/components/admin/SectionHeaderAdmin";
 
 interface StepData {
   id?: number;
@@ -76,10 +77,12 @@ const HowItWorksAdmin = () => {
           <Button variant="outline" onClick={handleAddStep}><Plus className="mr-2 h-4 w-4" /> Add Step</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" />}
-            Save Changes
+            Save All Changes
           </Button>
         </div>
       </div>
+
+      <SectionHeaderAdmin sectionKey="how_it_works" />
 
       <div className="grid gap-6">
         {steps.map((step, idx) => (

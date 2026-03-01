@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SectionHeaderAdmin } from "@/components/admin/SectionHeaderAdmin";
 
 interface PricingData {
   id?: number;
@@ -93,10 +94,12 @@ const PricingAdmin = () => {
           <Button variant="outline" onClick={handleAddPlan}><Plus className="mr-2 h-4 w-4" /> Add Plan</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" />}
-            Save Changes
+            Save All Changes
           </Button>
         </div>
       </div>
+
+      <SectionHeaderAdmin sectionKey="pricing" />
 
       <div className="grid gap-8">
         {plans.map((plan, pIdx) => (
