@@ -47,7 +47,7 @@ const Login = () => {
               <label className="text-sm font-medium">Email</label>
               <Input 
                 type="email" 
-                placeholder="admin@solusimedsos.id" 
+                placeholder="contoh: admin@solusimedsos.id" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
