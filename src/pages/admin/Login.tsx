@@ -47,7 +47,7 @@ const Login = () => {
               <label className="text-sm font-medium">Email</label>
               <Input 
                 type="email" 
-                placeholder="contoh: admin@solusimedsos.id" 
+                placeholder="email@example" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
@@ -57,6 +57,7 @@ const Login = () => {
               <label className="text-sm font-medium">Password</label>
               <Input 
                 type="password" 
+                placeholder="password"
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
