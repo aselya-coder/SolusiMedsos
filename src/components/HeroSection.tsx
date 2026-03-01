@@ -17,7 +17,7 @@ interface HeroData {
   background_image_url?: string;
 }
 
-const DEFAULT_HERO = {
+const DEFAULT_HERO: HeroData = {
   badge_text: "#1 Agency Buzzer Terpercaya di Indonesia",
   title_part1: "Solusi Jasa Buzzer &",
   title_gradient: "Campaign Sosial Media",

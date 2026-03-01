@@ -23,7 +23,7 @@ interface AdvantageData {
   text: string;
 }
 
-const DEFAULT_ABOUT = {
+const DEFAULT_ABOUT: AboutData = {
   badge_text: "Tentang Kami",
   title_part1: "Agency Buzzer",
   title_gradient: "Profesional",
@@ -31,7 +31,7 @@ const DEFAULT_ABOUT = {
   description_2: "Didukung oleh tim strategis berpengalaman dan teknologi monitoring terkini, kami membantu klien mencapai tujuan digital mereka dengan cara yang aman dan profesional.",
 };
 
-const DEFAULT_ADVANTAGES = [
+const DEFAULT_ADVANTAGES: AdvantageData[] = [
   { icon_name: "Users", text: "Akun Real & Aktif" },
   { icon_name: "Target", text: "Targeting Sesuai Segmentasi" },
   { icon_name: "Shield", text: "Aman & Rahasia" },

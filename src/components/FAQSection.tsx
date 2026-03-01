@@ -8,7 +8,7 @@ import {
 import { useFetchData } from "@/hooks/useFetchData";
 
 // Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_FAQS = [
+const DEFAULT_FAQS: FAQData[] = [
   {
     question: "Apakah akun yang digunakan real?",
     answer: "Ya, semua akun yang kami gunakan adalah akun real dan aktif. Kami tidak menggunakan bot sehingga engagement yang dihasilkan terlihat natural dan organik.",

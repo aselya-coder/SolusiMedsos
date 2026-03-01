@@ -11,7 +11,7 @@ const iconMap: Record<string, any> = {
 };
 
 // Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_STEPS = [
+const DEFAULT_STEPS: StepData[] = [
   { icon_name: "MessageSquare", title: "Konsultasi", description: "Diskusi kebutuhan dan tujuan campaign Anda bersama tim kami.", step_number: 1 },
   { icon_name: "Search", title: "Analisa Target", description: "Riset mendalam terhadap target audiens dan strategi optimal.", step_number: 2 },
   { icon_name: "Rocket", title: "Eksekusi Campaign", description: "Jalankan campaign dengan jaringan akun real dan terkoordinasi.", step_number: 3 },

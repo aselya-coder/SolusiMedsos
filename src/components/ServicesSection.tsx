@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useFetchData } from "@/hooks/useFetchData";
 
 // Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_SERVICES = [
+const DEFAULT_SERVICES: ServiceData[] = [
   {
     title: "Jasa Buzzer Twitter (X)",
     description: "Dominasi percakapan di Twitter/X dengan jaringan akun real yang siap mendukung campaign Anda.",

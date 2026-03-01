@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { useFetchData } from "@/hooks/useFetchData";
 
 // Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_PLANS = [
+const DEFAULT_PLANS: PricingData[] = [
   { id: 101, name: "Basic", price: "Mulai 1.5 Jt", is_popular: false },
   { id: 102, name: "Professional", price: "Mulai 5 Jt", is_popular: true },
   { id: 103, name: "Premium", price: "Mulai 15 Jt", is_popular: false },
   { id: 104, name: "Custom Campaign", price: "Hubungi Kami", is_popular: false },
 ];
 
-const DEFAULT_FEATURES = [
+const DEFAULT_FEATURES: FeatureData[] = [
   { pricing_id: 101, feature: "50 Akun Buzzer" },
   { pricing_id: 101, feature: "Durasi 3 Hari" },
   { pricing_id: 102, feature: "200 Akun Buzzer" },

@@ -3,7 +3,7 @@ import { Star, Quote } from "lucide-react";
 import { useFetchData } from "@/hooks/useFetchData";
 
 // Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_TESTIMONIALS = [
+const DEFAULT_TESTIMONIALS: TestimonialData[] = [
   {
     name: "Direktur Marketing",
     company: "PT. *** Indonesia",
