@@ -5,48 +5,27 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useFetchData } from "@/hooks/useFetchData";
 
-// Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_FAQS: FAQData[] = [
+const faqs = [
   {
-    question: "Apakah akun yang digunakan real?",
-    answer: "Ya, semua akun yang kami gunakan adalah akun real dan aktif. Kami tidak menggunakan bot sehingga engagement yang dihasilkan terlihat natural dan organik.",
+    q: "Apakah akun yang digunakan real?",
+    a: "Ya, semua akun yang kami gunakan adalah akun real dan aktif. Kami tidak menggunakan bot sehingga engagement yang dihasilkan terlihat natural dan organik.",
   },
   {
-    question: "Apakah aman dan rahasia?",
-    answer: "Keamanan dan kerahasiaan klien adalah prioritas utama kami. Kami siap menandatangani NDA dan semua data campaign dijaga kerahasiaannya.",
+    q: "Apakah aman dan rahasia?",
+    a: "Keamanan dan kerahasiaan klien adalah prioritas utama kami. Kami siap menandatangani NDA dan semua data campaign dijaga kerahasiaannya.",
   },
   {
-    question: "Apakah bisa custom campaign?",
-    answer: "Tentu! Kami menyediakan paket custom yang bisa disesuaikan dengan kebutuhan, budget, dan target spesifik Anda.",
+    q: "Apakah bisa custom campaign?",
+    a: "Tentu! Kami menyediakan paket custom yang bisa disesuaikan dengan kebutuhan, budget, dan target spesifik Anda.",
   },
   {
-    question: "Berapa lama hasil terlihat?",
-    answer: "Hasil bisa terlihat dalam 1-3 hari setelah campaign dimulai, tergantung skala dan jenis campaign yang dipilih.",
+    q: "Berapa lama hasil terlihat?",
+    a: "Hasil bisa terlihat dalam 1-3 hari setelah campaign dimulai, tergantung skala dan jenis campaign yang dipilih.",
   },
 ];
 
-interface FAQData {
-  question: string;
-  answer: string;
-}
-
 const FAQSection = () => {
-  const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: fetchedFaqs, loading } = useFetchData<FAQData[]>("faq", { orderBy: "display_order" });
-
-  const header = allHeaders?.find(h => h.section_key === 'faq') || {
-    badge_text: "FAQ",
-    title_part1: "Pertanyaan",
-    title_gradient: "Umum"
-  };
-
-  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_FAQS
-  const displayFaqs = (fetchedFaqs && fetchedFaqs.length > 0) ? fetchedFaqs : DEFAULT_FAQS;
-
-  if (loading) return null;
-
   return (
     <section id="faq" className="py-20 lg:py-32 bg-muted/30">
       <div className="section-container max-w-3xl">
@@ -56,10 +35,9 @@ const FAQSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">FAQ</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header.title_part1}{" "}
-            <span className="gradient-text">{header.title_gradient}</span>
+            Pertanyaan <span className="gradient-text">Umum</span>
           </h2>
         </motion.div>
 
@@ -69,17 +47,17 @@ const FAQSection = () => {
           viewport={{ once: true }}
         >
           <Accordion type="single" collapsible className="space-y-3">
-            {displayFaqs.map((faq, i) => (
+            {faqs.map((faq, i) => (
               <AccordionItem
                 key={i}
                 value={`item-${i}`}
                 className="card-gradient border border-border rounded-lg px-6"
               >
                 <AccordionTrigger className="text-foreground font-heading font-semibold hover:text-primary text-left">
-                  {faq.question}
+                  {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  {faq.answer}
+                  {faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}

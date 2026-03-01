@@ -2,43 +2,31 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFetchData } from "@/hooks/useFetchData";
 
-interface NavLinkData {
-  label: string;
-  href: string;
-}
-
-interface NavbarData {
-  brand_name: string;
-  brand_gradient_text: string;
-  cta_text: string;
-  cta_link: string;
-}
+const navLinks = [
+  { label: "Beranda", href: "#hero" },
+  { label: "Tentang", href: "#about" },
+  { label: "Layanan", href: "#services" },
+  { label: "Harga", href: "#pricing" },
+  { label: "Cara Kerja", href: "#how-it-works" },
+  { label: "Testimoni", href: "#testimonials" },
+  { label: "FAQ", href: "#faq" },
+];
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: navLinks, loading: linksLoading } = useFetchData<NavLinkData[]>("nav_links", { orderBy: "display_order" });
-  const { data: navbarData, loading: navbarLoading } = useFetchData<NavbarData>("navbar", { single: true });
-  const { data: wsData } = useFetchData<any>("whatsapp_settings", { single: true });
-
-  if (linksLoading || navbarLoading) return null;
-
-  const phoneNumber = wsData?.phone_number || "6285646420488";
-  const waMessage = encodeURIComponent(`Halo SolusiMedsos, saya butuh bantuan.`);
-  const waUrl = `https://wa.me/${phoneNumber}?text=${waMessage}`;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
       <div className="section-container flex items-center justify-between h-16 lg:h-20">
         <a href="#hero" className="font-heading text-xl lg:text-2xl font-bold">
-          <span className="gradient-text">{navbarData?.brand_name}</span>
-          <span className="text-foreground">{navbarData?.brand_gradient_text}</span>
+          <span className="gradient-text">Solusi</span>
+          <span className="text-foreground">Medsos</span>
         </a>
 
         {/* Desktop */}
         <div className="hidden lg:flex items-center gap-8">
-          {navLinks?.map((link) => (
+          {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -52,8 +40,8 @@ const Navbar = () => {
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
-            <a href={waUrl} target="_blank" rel="noopener noreferrer">
-              {navbarData?.cta_text}
+            <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+              Konsultasi Gratis
             </a>
           </Button>
         </div>
@@ -77,7 +65,7 @@ const Navbar = () => {
             className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
             <div className="section-container py-4 flex flex-col gap-4">
-              {navLinks?.map((link) => (
+              {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
@@ -91,8 +79,8 @@ const Navbar = () => {
                 asChild
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold w-full"
               >
-                <a href={waUrl} target="_blank" rel="noopener noreferrer">
-                  {navbarData?.cta_text}
+                <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+                  Konsultasi Gratis
                 </a>
               </Button>
             </div>

@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
-import { useFetchData } from "@/hooks/useFetchData";
 
-// Data default tetap ada di file ini agar tidak terhapus
-const DEFAULT_TESTIMONIALS: TestimonialData[] = [
+const testimonials = [
   {
     name: "Direktur Marketing",
     company: "PT. *** Indonesia",
@@ -30,28 +28,7 @@ const DEFAULT_TESTIMONIALS: TestimonialData[] = [
   },
 ];
 
-interface TestimonialData {
-  name: string;
-  company: string;
-  content: string;
-  rating: number;
-}
-
 const TestimonialsSection = () => {
-  const { data: allHeaders } = useFetchData<any[]>("section_content");
-  const { data: fetchedTestimonials, loading } = useFetchData<TestimonialData[]>("testimonials", { orderBy: "display_order" });
-
-  const header = allHeaders?.find(h => h.section_key === 'testimonials') || {
-    badge_text: "Testimoni",
-    title_part1: "Dipercaya oleh",
-    title_gradient: "Ratusan Klien"
-  };
-
-  // Gunakan data dari database jika ada, jika tidak gunakan DEFAULT_TESTIMONIALS
-  const displayTestimonials = (fetchedTestimonials && fetchedTestimonials.length > 0) ? fetchedTestimonials : DEFAULT_TESTIMONIALS;
-
-  if (loading) return null;
-
   return (
     <section id="testimonials" className="py-20 lg:py-32">
       <div className="section-container">
@@ -61,15 +38,14 @@ const TestimonialsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">{header.badge_text}</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wider">Testimoni</span>
           <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3">
-            {header.title_part1}{" "}
-            <span className="gradient-text">{header.title_gradient}</span>
+            Dipercaya oleh <span className="gradient-text">Ratusan Klien</span>
           </h2>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {displayTestimonials?.map((t, i) => (
+          {testimonials.map((t, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
