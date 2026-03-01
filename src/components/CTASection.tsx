@@ -24,7 +24,7 @@ const CTASection = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-10 animate-pulse-glow"
             >
-              <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20membuat%20campaign%20viral." target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Hubungi Kami via WhatsApp
               </a>
@@ -35,7 +35,7 @@ const CTASection = () => {
               size="lg"
               className="border-border text-foreground hover:bg-muted font-semibold text-lg px-10"
             >
-              <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi%20gratis." target="_blank" rel="noopener noreferrer">
                 Konsultasi Gratis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>

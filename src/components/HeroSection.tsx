@@ -61,7 +61,7 @@ const HeroSection = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-8 animate-pulse-glow"
             >
-              <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi%20mengenai%20campaign." target="_blank" rel="noopener noreferrer">
                 Konsultasi Sekarang
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>

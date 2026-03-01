@@ -91,7 +91,7 @@ const ServicesSection = () => {
                 size="sm"
                 className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all w-full"
               >
-                <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+                <a href={`https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20bertanya%20tentang%20layanan%20${encodeURIComponent(service.title)}.`} target="_blank" rel="noopener noreferrer">
                   Pesan Sekarang
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>

@@ -108,7 +108,7 @@ const PricingSection = () => {
                     : "bg-muted hover:bg-muted/80 text-foreground"
                 }`}
               >
-                <a href="https://wa.me/6285646420488" target="_blank" rel="noopener noreferrer">
+                <a href={`https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20memesan%20paket%20${encodeURIComponent(plan.name)}.`} target="_blank" rel="noopener noreferrer">
                   Pilih Paket
                 </a>
               </Button>

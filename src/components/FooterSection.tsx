@@ -44,7 +44,7 @@ const FooterSection = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
-                <a href="https://wa.me/6285646420488" className="hover:text-primary transition-colors">WhatsApp</a>
+                <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20bertanya%20lebih%20lanjut." target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">WhatsApp</a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
