@@ -5,18 +5,35 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useFetchData } from "@/hooks/useFetchData";
 
-interface FAQData {
-  question: string;
-  answer: string;
-}
+const faqs = [
+  {
+    q: "Apakah akun yang digunakan real?",
+    a: "Ya, semua akun yang kami gunakan adalah akun real dan aktif. Kami tidak menggunakan bot sehingga engagement yang dihasilkan terlihat natural dan organik.",
+  },
+  {
+    q: "Apakah aman dan rahasia?",
+    a: "Keamanan dan kerahasiaan klien adalah prioritas utama kami. Kami siap menandatangani NDA dan semua data campaign dijaga kerahasiaannya.",
+  },
+  {
+    q: "Apakah bisa custom campaign?",
+    a: "Tentu! Kami menyediakan paket custom yang bisa disesuaikan dengan kebutuhan, budget, dan target spesifik Anda.",
+  },
+  {
+    q: "Berapa lama hasil terlihat?",
+    a: "Hasil bisa terlihat dalam 1-3 hari setelah campaign dimulai, tergantung skala dan jenis campaign yang dipilih.",
+  },
+  {
+    q: "Platform apa saja yang didukung?",
+    a: "Kami mendukung semua platform utama termasuk Twitter/X, Instagram, TikTok, Facebook, YouTube, dan platform lainnya.",
+  },
+  {
+    q: "Bagaimana sistem pembayaran?",
+    a: "Pembayaran bisa dilakukan via transfer bank, e-wallet, atau metode lain yang disepakati. Kami menerima DP 50% di awal.",
+  },
+];
 
 const FAQSection = () => {
-  const { data: faqs, loading } = useFetchData<FAQData[]>("faq", { orderBy: "display_order" });
-
-  if (loading) return null;
-
   return (
     <section id="faq" className="py-20 lg:py-32 bg-muted/30">
       <div className="section-container max-w-3xl">
@@ -39,17 +56,17 @@ const FAQSection = () => {
           viewport={{ once: true }}
         >
           <Accordion type="single" collapsible className="space-y-3">
-            {faqs?.map((faq, i) => (
+            {faqs.map((faq, i) => (
               <AccordionItem
                 key={i}
                 value={`item-${i}`}
                 className="card-gradient border border-border rounded-lg px-6"
               >
                 <AccordionTrigger className="text-foreground font-heading font-semibold hover:text-primary text-left">
-                  {faq.question}
+                  {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  {faq.answer}
+                  {faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}
