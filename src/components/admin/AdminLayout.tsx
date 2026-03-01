@@ -32,6 +32,18 @@ const AdminLayout = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!session) return <Navigate to="/admin/login" />;
 
+  // Only allow admin email
+  const isAdmin = session.user.email === "admin@solusimedsos.id";
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4 p-4 text-center">
+        <h1 className="text-2xl font-bold text-destructive">Akses Ditolak</h1>
+        <p className="text-muted-foreground">Hanya akun administrator yang dapat mengakses halaman ini.</p>
+        <Button onClick={handleLogout}>Keluar</Button>
+      </div>
+    );
+  }
+
   const menuItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Navbar", href: "/admin/navbar", icon: Globe },

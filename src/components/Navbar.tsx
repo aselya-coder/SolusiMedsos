@@ -40,7 +40,7 @@ const Navbar = () => {
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
-            <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi%20gratis." target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi." target="_blank" rel="noopener noreferrer">
               Konsultasi Gratis
             </a>
           </Button>
