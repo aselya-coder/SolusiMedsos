@@ -9,6 +9,7 @@ const AdminLayout = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +26,21 @@ const AdminLayout = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!session?.user?.id) return;
+      setIsAdmin(null);
+      const envIds = (import.meta.env.VITE_ADMIN_USER_IDS as string | undefined)?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
+      if (envIds.length > 0 && envIds.includes(session.user.id)) {
+        setIsAdmin(true);
+        return;
+      }
+      const { data } = await supabase.from("admins").select("user_id").eq("user_id", session.user.id).maybeSingle();
+      setIsAdmin(Boolean(data?.user_id));
+    };
+    checkAdmin();
+  }, [session]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/admin/login");
@@ -33,7 +49,7 @@ const AdminLayout = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!session) return <Navigate to="/admin/login" />;
 
-  const isAdmin = Boolean(session.user?.email);
+  if (isAdmin === null) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4 p-4 text-center">

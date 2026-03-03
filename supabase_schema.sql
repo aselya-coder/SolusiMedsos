@@ -183,6 +183,12 @@ INSERT INTO services (title, description, benefits, cta_text, cta_link, display_
 ('Jasa Buzzer TikTok', 'Viralkan konten TikTok Anda dengan dukungan views, likes, dan komentar dari akun aktif.', ARRAY['FYP strategy', 'Mass engagement', 'Konten viral'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 3),
 ('Trending Topic Campaign', 'Buat topik trending secara organik di platform sosial media pilihan Anda.', ARRAY['Trending nasional', 'Multi-platform', 'Real-time monitoring'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 4);
 
+INSERT INTO services (title, description, benefits, cta_text, cta_link, display_order) VALUES
+('Viral Marketing', 'Strategi pemasaran viral yang dirancang untuk memaksimalkan jangkauan brand Anda.', ARRAY['Content seeding', 'Influencer network', 'Amplifikasi masif'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 5),
+('Personal Branding', 'Bangun citra personal yang kuat dan konsisten di seluruh platform digital.', ARRAY['Konsistensi citra', 'Thought leadership', 'Media handling'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 6),
+('Manajemen Opini Publik', 'Kelola dan arahkan narasi publik untuk melindungi reputasi dan citra brand Anda.', ARRAY['Sentiment control', 'Counter narasi', 'Crisis management'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 7),
+('Campaign Politik', 'Dukungan campaign politik yang strategis, terukur, dan berpengalaman di pemilu Indonesia.', ARRAY['Ground game digital', 'Elektabilitas', 'Survey & monitoring'], 'Pesan Sekarang', 'https://wa.me/6281234567890', 8);
+
 INSERT INTO how_it_works (icon_name, title, description, step_number, display_order) VALUES 
 ('MessageSquare', 'Konsultasi', 'Diskusi kebutuhan dan tujuan campaign Anda bersama tim kami.', 1, 1),
 ('Search', 'Analisa Target', 'Riset mendalam terhadap target audiens dan strategi optimal.', 2, 2),
