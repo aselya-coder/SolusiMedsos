@@ -1,14 +1,48 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Shield, Target, BarChart3, Users } from "lucide-react";
+import { CheckCircle2, Users, Target, Shield, BarChart3 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-const advantages = [
-  { icon: Users, text: "Akun Real & Aktif" },
-  { icon: Target, text: "Targeting Sesuai Segmentasi" },
-  { icon: Shield, text: "Aman & Rahasia" },
-  { icon: BarChart3, text: "Reporting Transparan" },
-];
+type AboutRow = {
+  id?: number;
+  badge_text: string;
+  title_part1: string;
+  title_gradient: string;
+  description_1: string;
+  description_2: string;
+  image_url?: string;
+};
+
+type AdvantageRow = { id?: number; icon_name: string; text: string; display_order: number };
 
 const AboutSection = () => {
+  const [about, setAbout] = useState<AboutRow | null>(null);
+  const [advantages, setAdvantages] = useState<AdvantageRow[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: aboutData } = await supabase
+        .from("about_section")
+        .select("*")
+        .order("id", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const { data: advData } = await supabase.from("about_advantages").select("*").order("display_order");
+      if (aboutData) setAbout(aboutData as AboutRow);
+      if (advData) setAdvantages(advData as AdvantageRow[]);
+    };
+    fetchData();
+
+    const channel = supabase
+      .channel("about-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "about_section" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "about_advantages" }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section id="about" className="py-20 lg:py-32">
       <div className="section-container">
@@ -19,16 +53,18 @@ const AboutSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Tentang Kami</span>
+            <span className="text-primary font-semibold text-sm uppercase tracking-wider">{about?.badge_text || "Tentang Kami"}</span>
             <h2 className="text-3xl lg:text-5xl font-heading font-bold mt-3 mb-6">
-              Agency Buzzer{" "}
-              <span className="gradient-text">Profesional</span>
+              {(about?.title_part1 || "Agency Buzzer") + " "}
+              <span className="gradient-text">{about?.title_gradient || "Profesional"}</span>
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Kami adalah agency jasa buzzer profesional yang berpengalaman menangani campaign politik, brand awareness, UMKM, dan personal branding. Dengan jaringan akun real & aktif serta strategi organik yang sistematis, kami memastikan setiap campaign berjalan efektif dan terukur.
+              {about?.description_1 ||
+                "Kami adalah agency jasa buzzer profesional yang berpengalaman menangani campaign politik, brand awareness, UMKM, dan personal branding. Dengan jaringan akun real & aktif serta strategi organik yang sistematis, kami memastikan setiap campaign berjalan efektif dan terukur."}
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Didukung oleh tim strategis berpengalaman dan teknologi monitoring terkini, kami membantu klien mencapai tujuan digital mereka dengan cara yang aman dan profesional.
+              {about?.description_2 ||
+                "Didukung oleh tim strategis berpengalaman dan teknologi monitoring terkini, kami membantu klien mencapai tujuan digital mereka dengan cara yang aman dan profesional."}
             </p>
           </motion.div>
 
@@ -48,7 +84,12 @@ const AboutSection = () => {
                 transition={{ delay: 0.1 * i }}
                 className="card-gradient rounded-lg p-6 border border-border hover-lift"
               >
-                <item.icon className="h-8 w-8 text-primary mb-4" />
+                {{
+                  Users: <Users className="h-8 w-8 text-primary mb-4" />,
+                  Target: <Target className="h-8 w-8 text-primary mb-4" />,
+                  Shield: <Shield className="h-8 w-8 text-primary mb-4" />,
+                  BarChart3: <BarChart3 className="h-8 w-8 text-primary mb-4" />,
+                }[item.icon_name] ?? <CheckCircle2 className="h-8 w-8 text-primary mb-4" />}
                 <h3 className="font-heading font-semibold text-foreground">{item.text}</h3>
               </motion.div>
             ))}

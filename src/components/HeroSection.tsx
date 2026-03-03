@@ -1,20 +1,61 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
+import { supabase } from "@/lib/supabaseClient";
 
-const stats = [
-  { value: "10.000+", label: "Akun Jaringan" },
-  { value: "500+", label: "Campaign Sukses" },
-  { value: "100+", label: "Klien Terpercaya" },
-];
+type HeroRow = {
+  id?: number;
+  badge_text: string;
+  title_part1: string;
+  title_gradient: string;
+  title_part2: string;
+  subtitle: string;
+  primary_btn_text: string;
+  primary_btn_link: string;
+  secondary_btn_text: string;
+  secondary_btn_link: string;
+  background_image_url?: string;
+};
+
+type StatRow = { id?: number; value: string; label: string; display_order: number };
 
 const HeroSection = () => {
+  const [hero, setHero] = useState<HeroRow | null>(null);
+  const [stats, setStats] = useState<StatRow[]>([]);
+
+  const fetchData = async () => {
+    const { data: heroData } = await supabase
+      .from("hero_section")
+      .select("*")
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const { data: statData } = await supabase.from("hero_stats").select("*").order("display_order");
+    if (heroData) setHero(heroData as HeroRow);
+    if (statData) setStats(statData as StatRow[]);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("hero-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hero_section" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "hero_stats" }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden pt-20">
-      {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-40" />
+        <img src={hero?.background_image_url || heroBg} alt="" className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
       </div>
 
@@ -26,7 +67,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
-              #1 Agency Buzzer Terpercaya di Indonesia
+              {hero?.badge_text || "#1 Agency Buzzer Terpercaya di Indonesia"}
             </span>
           </motion.div>
 
@@ -36,9 +77,9 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-7xl font-heading font-bold leading-tight mb-6 text-balance"
           >
-            Solusi Jasa Buzzer &{" "}
-            <span className="gradient-text">Campaign Sosial Media</span>{" "}
-            Terpercaya
+            {(hero?.title_part1 || "Solusi Jasa Buzzer &") + " "}
+            <span className="gradient-text">{hero?.title_gradient || "Campaign Sosial Media"}</span>{" "}
+            {(hero?.title_part2 || "Terpercaya")}
           </motion.h1>
 
           <motion.p
@@ -47,7 +88,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg lg:text-xl text-muted-foreground max-w-2xl mb-10"
           >
-            Tingkatkan branding, engagement, dan opini publik dengan strategi digital yang terukur dan aman.
+            {hero?.subtitle || "Tingkatkan branding, engagement, dan opini publik dengan strategi digital yang terukur dan aman."}
           </motion.p>
 
           <motion.div
@@ -61,8 +102,8 @@ const HeroSection = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-8 animate-pulse-glow"
             >
-              <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi%20mengenai%20campaign." target="_blank" rel="noopener noreferrer">
-                Konsultasi Sekarang
+              <a href={`https://wa.me/6285646420488?text=${encodeURIComponent(hero?.primary_btn_text ? `Halo SolusiMedsos, saya ingin ${hero.primary_btn_text.toLowerCase()}` : "Halo SolusiMedsos, saya ingin konsultasi mengenai campaign.")}`} target="_blank" rel="noopener noreferrer">
+                {hero?.primary_btn_text || "Konsultasi Sekarang"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
             </Button>
@@ -72,14 +113,14 @@ const HeroSection = () => {
               size="lg"
               className="border-border text-foreground hover:bg-muted font-semibold text-base px-8"
             >
-              <a href="#pricing">
+              <a href={hero?.secondary_btn_link || "#pricing"}>
                 <Play className="mr-2 h-4 w-4" />
-                Lihat Paket Harga
+                {hero?.secondary_btn_text || "Lihat Paket Harga"}
               </a>
             </Button>
           </motion.div>
 
-          {/* Stats */}
+          {stats.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -95,6 +136,7 @@ const HeroSection = () => {
               </div>
             ))}
           </motion.div>
+          )}
         </div>
       </div>
     </section>

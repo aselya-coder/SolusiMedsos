@@ -1,31 +1,29 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabase } from "@/lib/supabaseClient";
 
-const faqs = [
-  {
-    q: "Apakah akun yang digunakan real?",
-    a: "Ya, semua akun yang kami gunakan adalah akun real dan aktif. Kami tidak menggunakan bot sehingga engagement yang dihasilkan terlihat natural dan organik.",
-  },
-  {
-    q: "Apakah aman dan rahasia?",
-    a: "Keamanan dan kerahasiaan klien adalah prioritas utama kami. Kami siap menandatangani NDA dan semua data campaign dijaga kerahasiaannya.",
-  },
-  {
-    q: "Apakah bisa custom campaign?",
-    a: "Tentu! Kami menyediakan paket custom yang bisa disesuaikan dengan kebutuhan, budget, dan target spesifik Anda.",
-  },
-  {
-    q: "Berapa lama hasil terlihat?",
-    a: "Hasil bisa terlihat dalam 1-3 hari setelah campaign dimulai, tergantung skala dan jenis campaign yang dipilih.",
-  },
-];
+type FAQRow = { id?: number; question: string; answer: string; display_order: number };
 
 const FAQSection = () => {
+  const [faqs, setFaqs] = useState<FAQRow[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase.from("faq").select("*").order("display_order").limit(4);
+      if (data) setFaqs(data as FAQRow[]);
+    };
+    fetchData();
+
+    const channel = supabase
+      .channel("faq-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "faq" }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section id="faq" className="py-20 lg:py-32 bg-muted/30">
       <div className="section-container max-w-3xl">
@@ -46,22 +44,26 @@ const FAQSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
+          {faqs.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">Belum ada FAQ</div>
+          ) : (
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, i) => (
               <AccordionItem
-                key={i}
+                key={`${faq.id ?? i}`}
                 value={`item-${i}`}
                 className="card-gradient border border-border rounded-lg px-6"
               >
                 <AccordionTrigger className="text-foreground font-heading font-semibold hover:text-primary text-left">
-                  {faq.q}
+                  {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  {faq.a}
+                  {faq.answer}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
+          )}
         </motion.div>
       </div>
     </section>

@@ -19,11 +19,12 @@ interface HeroData {
   primary_btn_link: string;
   secondary_btn_text: string;
   secondary_btn_link: string;
-  background_image_url?: string;
+  background_image_url?: string | null;
 }
 
 const HeroAdmin = () => {
   const { toast } = useToast();
+
   const [heroData, setHeroData] = useState<HeroData>({
     badge_text: "",
     title_part1: "",
@@ -33,8 +34,10 @@ const HeroAdmin = () => {
     primary_btn_text: "",
     primary_btn_link: "",
     secondary_btn_text: "",
-    secondary_btn_link: ""
+    secondary_btn_link: "",
+    background_image_url: null
   });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,116 +48,219 @@ const HeroAdmin = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("hero_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+
+    const { data, error } = await supabase
+      .from("hero_section")
+      .select("*")
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
     if (error) {
+      console.error("FETCH ERROR:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
       setLoading(false);
       return;
     }
-    if (data) setHeroData(data);
+
+    if (data) {
+      setHeroData(data);
+    }
+
     setLoading(false);
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    const { error } = await supabase.from("hero_section").upsert(heroData);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Hero section updated" });
+    if (!heroData.id) {
+      toast({
+        title: "Error",
+        description: "ID tidak ditemukan",
+        variant: "destructive"
+      });
+      return;
     }
+
+    setSaving(true);
+
+    const { error } = await supabase
+      .from("hero_section")
+      .update({
+        badge_text: heroData.badge_text,
+        title_part1: heroData.title_part1,
+        title_gradient: heroData.title_gradient,
+        title_part2: heroData.title_part2,
+        subtitle: heroData.subtitle,
+        primary_btn_text: heroData.primary_btn_text,
+        primary_btn_link: heroData.primary_btn_link,
+        secondary_btn_text: heroData.secondary_btn_text,
+        secondary_btn_link: heroData.secondary_btn_link,
+        background_image_url: heroData.background_image_url
+      })
+      .eq("id", heroData.id);
+
+    if (error) {
+      console.error("SAVE ERROR:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Hero section berhasil diupdate"
+      });
+    }
+
     setSaving(false);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
+
     setUploading(true);
+
     try {
       const url = await uploadImage(e.target.files[0]);
-      setHeroData({ ...heroData, background_image_url: url });
-      toast({ title: "Success", description: "Image uploaded" });
+
+      setHeroData({
+        ...heroData,
+        background_image_url: url
+      });
+
+      toast({
+        title: "Success",
+        description: "Image uploaded"
+      });
+
     } catch (error: unknown) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : String(error),
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setUploading(false);
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center p-20"><Loader2 className="animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Manage Hero Section</h1>
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" />}
+          {saving ? (
+            <Loader2 className="animate-spin mr-2" />
+          ) : (
+            <Save className="mr-2" />
+          )}
           Save Changes
         </Button>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Content</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Content</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Badge Text</label>
-            <Input value={heroData.badge_text} onChange={(e) => setHeroData({...heroData, badge_text: e.target.value})} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Title Part 1</label>
-              <Input value={heroData.title_part1} onChange={(e) => setHeroData({...heroData, title_part1: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Title Gradient</label>
-              <Input value={heroData.title_gradient} onChange={(e) => setHeroData({...heroData, title_gradient: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Title Part 2</label>
-              <Input value={heroData.title_part2} onChange={(e) => setHeroData({...heroData, title_part2: e.target.value})} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Subtitle</label>
-            <Textarea value={heroData.subtitle} onChange={(e) => setHeroData({...heroData, subtitle: e.target.value})} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Primary Button Text</label>
-              <Input value={heroData.primary_btn_text} onChange={(e) => setHeroData({...heroData, primary_btn_text: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Primary Button Link</label>
-              <Input value={heroData.primary_btn_link} onChange={(e) => setHeroData({...heroData, primary_btn_link: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Secondary Button Text</label>
-              <Input value={heroData.secondary_btn_text} onChange={(e) => setHeroData({...heroData, secondary_btn_text: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Secondary Button Link</label>
-              <Input value={heroData.secondary_btn_link} onChange={(e) => setHeroData({...heroData, secondary_btn_link: e.target.value})} />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <label className="text-sm font-medium">Background Image</label>
-            <div className="flex items-center gap-4">
-              {heroData.background_image_url && (
-                <img src={heroData.background_image_url} alt="Preview" className="w-32 h-20 object-cover rounded-md border" />
-              )}
-              <div className="flex-grow">
-                <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" id="hero-img" />
-                <Button asChild variant="outline" disabled={uploading}>
-                  <label htmlFor="hero-img" className="cursor-pointer">
-                    {uploading ? <Loader2 className="animate-spin mr-2" /> : <Upload className="mr-2 h-4 w-4" />}
-                    Upload New Image
-                  </label>
-                </Button>
-              </div>
-            </div>
-          </div>
+
+          <Input
+            placeholder="Badge Text"
+            value={heroData.badge_text}
+            onChange={(e) =>
+              setHeroData({ ...heroData, badge_text: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Title Part 1"
+            value={heroData.title_part1}
+            onChange={(e) =>
+              setHeroData({ ...heroData, title_part1: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Title Gradient"
+            value={heroData.title_gradient}
+            onChange={(e) =>
+              setHeroData({ ...heroData, title_gradient: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Title Part 2"
+            value={heroData.title_part2}
+            onChange={(e) =>
+              setHeroData({ ...heroData, title_part2: e.target.value })
+            }
+          />
+
+          <Textarea
+            placeholder="Subtitle"
+            value={heroData.subtitle}
+            onChange={(e) =>
+              setHeroData({ ...heroData, subtitle: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Primary Button Text"
+            value={heroData.primary_btn_text}
+            onChange={(e) =>
+              setHeroData({ ...heroData, primary_btn_text: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Primary Button Link"
+            value={heroData.primary_btn_link}
+            onChange={(e) =>
+              setHeroData({ ...heroData, primary_btn_link: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Secondary Button Text"
+            value={heroData.secondary_btn_text}
+            onChange={(e) =>
+              setHeroData({ ...heroData, secondary_btn_text: e.target.value })
+            }
+          />
+
+          <Input
+            placeholder="Secondary Button Link"
+            value={heroData.secondary_btn_link}
+            onChange={(e) =>
+              setHeroData({ ...heroData, secondary_btn_link: e.target.value })
+            }
+          />
+
+          {heroData.background_image_url && (
+            <img
+              src={heroData.background_image_url}
+              alt="Preview"
+              className="w-40 rounded-md"
+            />
+          )}
+
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploading}
+          />
         </CardContent>
       </Card>
     </div>

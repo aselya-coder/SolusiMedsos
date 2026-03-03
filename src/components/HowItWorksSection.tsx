@@ -1,15 +1,36 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, Search, Rocket, BarChart3, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-const steps = [
-  { icon: MessageSquare, title: "Konsultasi", desc: "Diskusi kebutuhan dan tujuan campaign Anda bersama tim kami." },
-  { icon: Search, title: "Analisa Target", desc: "Riset mendalam terhadap target audiens dan strategi optimal." },
-  { icon: Rocket, title: "Eksekusi Campaign", desc: "Jalankan campaign dengan jaringan akun real dan terkoordinasi." },
-  { icon: BarChart3, title: "Monitoring & Reporting", desc: "Pantau progress real-time dengan laporan berkala." },
-  { icon: CheckCircle, title: "Evaluasi", description: "Analisa hasil dan rekomendasi untuk campaign selanjutnya." },
-];
+type StepRow = {
+  id?: number;
+  icon_name: string;
+  title: string;
+  description: string;
+  step_number: number;
+  display_order: number;
+};
 
 const HowItWorksSection = () => {
+  const [steps, setSteps] = useState<StepRow[]>([]);
+
+  useEffect(() => {
+    const fetchSteps = async () => {
+      const { data } = await supabase.from("how_it_works").select("*").order("display_order");
+      if (data) setSteps(data as StepRow[]);
+    };
+    fetchSteps();
+
+    const channel = supabase
+      .channel("howitworks-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "how_it_works" }, () => fetchSteps())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section id="how-it-works" className="py-20 lg:py-32 bg-muted/30">
       <div className="section-container">
@@ -25,14 +46,14 @@ const HowItWorksSection = () => {
           </h2>
         </motion.div>
 
+        {steps.length > 0 ? (
         <div className="relative">
-          {/* Connection line */}
           <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-border -translate-y-1/2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
             {steps.map((step, i) => (
               <motion.div
-                key={step.title}
+                key={`${step.title}-${i}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -40,15 +61,18 @@ const HowItWorksSection = () => {
                 className="text-center relative"
               >
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border border-primary/30 mb-4 relative z-10">
-                  <step.icon className="h-7 w-7 text-primary" />
+                  <CheckCircle className="h-7 w-7 text-primary" />
                 </div>
                 <div className="text-xs font-bold text-primary mb-2">STEP {i + 1}</div>
                 <h3 className="font-heading font-bold text-foreground mb-2">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.desc}</p>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-8">Belum ada langkah yang ditampilkan</div>
+        )}
       </div>
     </section>
   );

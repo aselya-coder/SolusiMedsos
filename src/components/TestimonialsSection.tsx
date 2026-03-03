@@ -1,34 +1,36 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-const testimonials = [
-  {
-    name: "Direktur Marketing",
-    company: "PT. *** Indonesia",
-    content: "Campaign yang dijalankan sangat efektif. Engagement naik 300% dalam waktu 1 minggu. Tim sangat profesional dan responsif.",
-    rating: 5,
-  },
-  {
-    name: "Tim Sukses",
-    company: "Partai ***",
-    content: "Strategi buzzer untuk kampanye politik kami berjalan mulus dan terkoordinasi. Elektabilitas kandidat naik signifikan.",
-    rating: 5,
-  },
-  {
-    name: "Owner UMKM",
-    company: "Brand Fashion Lokal",
-    content: "Produk kami viral di TikTok berkat campaign dari tim ini. Penjualan meningkat 5x lipat. Sangat recommended!",
-    rating: 5,
-  },
-  {
-    name: "Public Relations",
-    company: "Perusahaan BUMN",
-    content: "Manajemen opini publik yang sangat terukur. Berhasil meredam isu negatif dan membangun narasi positif.",
-    rating: 5,
-  },
-];
+type TestimonialRow = {
+  id?: number;
+  name: string;
+  company: string;
+  content: string;
+  rating: number;
+  display_order: number;
+};
 
 const TestimonialsSection = () => {
+  const [items, setItems] = useState<TestimonialRow[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase.from("testimonials").select("*").order("display_order");
+      if (data) setItems(data as TestimonialRow[]);
+    };
+    fetchData();
+
+    const channel = supabase
+      .channel("testimonials-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "testimonials" }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section id="testimonials" className="py-20 lg:py-32">
       <div className="section-container">
@@ -44,10 +46,13 @@ const TestimonialsSection = () => {
           </h2>
         </motion.div>
 
+        {items.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">Belum ada testimoni</div>
+        ) : (
         <div className="grid sm:grid-cols-2 gap-6">
-          {testimonials.map((t, i) => (
+          {items.map((t, i) => (
             <motion.div
-              key={i}
+              key={`${t.name}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -66,6 +71,7 @@ const TestimonialsSection = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

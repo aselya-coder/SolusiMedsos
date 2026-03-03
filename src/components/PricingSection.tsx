@@ -1,62 +1,34 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabaseClient";
 
-const plans = [
-  {
-    name: "Basic",
-    price: "Mulai 1.5 Jt",
-    features: [
-      "50 Akun Buzzer",
-      "Durasi 3 Hari",
-      "1 Platform (Pilih)",
-      "Target 5K Engagement",
-      "Laporan Akhir Campaign",
-    ],
-    isPopular: false,
-  },
-  {
-    name: "Professional",
-    price: "Mulai 5 Jt",
-    features: [
-      "200 Akun Buzzer",
-      "Durasi 7 Hari",
-      "2 Platform (Pilih)",
-      "Target 25K Engagement",
-      "Monitoring Harian",
-      "Analisa Kompetitor",
-    ],
-    isPopular: true,
-  },
-  {
-    name: "Premium",
-    price: "Mulai 15 Jt",
-    features: [
-      "500+ Akun Buzzer",
-      "Durasi 14 Hari",
-      "Multi Platform",
-      "Target 100K Engagement",
-      "Priority Support 24/7",
-      "Trending Topic Strategy",
-    ],
-    isPopular: false,
-  },
-  {
-    name: "Custom Campaign",
-    price: "Hubungi Kami",
-    features: [
-      "Akun Unlimited",
-      "Durasi Fleksibel",
-      "Semua Platform Digital",
-      "Target Custom",
-      "Full Managed Service",
-      "Strategi Khusus",
-    ],
-    isPopular: false,
-  },
-];
+type PlanRow = { id?: number; name: string; price: string; is_popular: boolean; display_order: number };
+type FeatureRow = { id?: number; pricing_id: number; feature: string; display_order: number };
 
 const PricingSection = () => {
+  const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [features, setFeatures] = useState<FeatureRow[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: plansData } = await supabase.from("pricing").select("*").order("display_order");
+      const { data: featuresData } = await supabase.from("pricing_features").select("*").order("display_order");
+      if (plansData) setPlans(plansData as PlanRow[]);
+      if (featuresData) setFeatures(featuresData as FeatureRow[]);
+    };
+    fetchData();
+
+    const channel = supabase
+      .channel("pricing-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "pricing" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "pricing_features" }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   return (
     <section id="pricing" className="py-20 lg:py-32">
       <div className="section-container">
@@ -72,19 +44,22 @@ const PricingSection = () => {
           </h2>
         </motion.div>
 
+        {plans.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">Belum ada paket harga</div>
+        ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan, i) => (
             <motion.div
-              key={plan.name}
+              key={`${plan.name}-${i}`}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               className={`card-gradient rounded-lg border p-6 flex flex-col relative ${
-                plan.isPopular ? "border-primary glow-border" : "border-border"
+                plan.is_popular ? "border-primary glow-border" : "border-border"
               }`}
             >
-              {plan.isPopular && (
+              {plan.is_popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
                   <Star className="h-3 w-3" />
                   Paling Laris
@@ -93,17 +68,17 @@ const PricingSection = () => {
               <h3 className="font-heading font-bold text-xl text-foreground mb-2">{plan.name}</h3>
               <div className="text-2xl font-heading font-bold gradient-text mb-6">{plan.price}</div>
               <ul className="space-y-3 mb-8 flex-grow">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                {features.filter((f) => f.pricing_id === plan.id).map((f) => (
+                  <li key={`${f.id}-${f.feature}`} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    {feature}
+                    {f.feature}
                   </li>
                 ))}
               </ul>
               <Button
                 asChild
                 className={`w-full font-semibold ${
-                  plan.isPopular
+                  plan.is_popular
                     ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                     : "bg-muted hover:bg-muted/80 text-foreground"
                 }`}
@@ -115,6 +90,7 @@ const PricingSection = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );
