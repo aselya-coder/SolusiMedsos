@@ -98,8 +98,12 @@ const AboutAdmin = () => {
       const url = await uploadImage(e.target.files[0]);
       setAboutData({ ...aboutData, image_url: url });
       toast({ title: "Success", description: "Image uploaded" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
     } finally {
       setUploading(false);
     }

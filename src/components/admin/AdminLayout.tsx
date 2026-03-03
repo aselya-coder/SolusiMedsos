@@ -3,9 +3,10 @@ import { Navigate, Outlet, Link, useNavigate, useLocation } from "react-router-d
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Globe, Image, Info, Briefcase, ListOrdered, DollarSign, MessageSquare, HelpCircle, Send, Phone, LogOut, Menu, X } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
 
 const AdminLayout = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
