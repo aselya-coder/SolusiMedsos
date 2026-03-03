@@ -20,9 +20,9 @@ export function useFetchData<T>(
         }
 
         if (options.single) {
-          const { data, error } = await query.single();
+          const { data, error } = await query.maybeSingle();
           if (error) throw error;
-          setData(data as T);
+          setData((data ?? null) as T | null);
         } else {
           const { data, error } = await query;
           if (error) throw error;

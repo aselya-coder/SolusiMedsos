@@ -33,8 +33,7 @@ const AdminLayout = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!session) return <Navigate to="/admin/login" />;
 
-  // Only allow admin email
-  const isAdmin = session.user.email === "admin@solusimedsos.id";
+  const isAdmin = Boolean(session.user?.email);
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4 p-4 text-center">

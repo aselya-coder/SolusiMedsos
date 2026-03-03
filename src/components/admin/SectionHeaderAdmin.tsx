@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,16 +20,16 @@ export const SectionHeaderAdmin = ({ sectionKey }: SectionHeaderProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchHeader();
-  }, [sectionKey]);
-
-  const fetchHeader = async () => {
+  const fetchHeader = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from("section_content").select("*").eq("section_key", sectionKey).single();
+    const { data } = await supabase.from("section_content").select("*").eq("section_key", sectionKey).maybeSingle();
     if (data) setHeader(data);
     setLoading(false);
-  };
+  }, [sectionKey]);
+
+  useEffect(() => {
+    fetchHeader();
+  }, [fetchHeader]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -45,7 +45,11 @@ const HeroAdmin = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data } = await supabase.from("hero_section").select("*").single();
+    const { data, error } = await supabase.from("hero_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+    if (error) {
+      setLoading(false);
+      return;
+    }
     if (data) setHeroData(data);
     setLoading(false);
   };

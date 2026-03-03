@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,23 +33,43 @@ const NavbarAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const { data: navData, error: navError } = await supabase.from("navbar").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+    if (navError) {
+      toast({ title: "Error", description: navError.message, variant: "destructive" });
+    } else if (navData) {
+      setNavbarData(navData);
+    }
+
+    const { data: linksData, error: linksError } = await supabase.from("nav_links").select("*").order("display_order");
+    if (linksError) {
+      toast({ title: "Error", description: linksError.message, variant: "destructive" });
+    } else if (linksData) {
+      setNavLinks(linksData);
+    }
+    setLoading(false);
+  }, [toast]);
+
   useEffect(() => {
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    const { data: navData } = await supabase.from("navbar").select("*").single();
-    if (navData) setNavbarData(navData);
-
-    const { data: linksData } = await supabase.from("nav_links").select("*").order("display_order");
-    if (linksData) setNavLinks(linksData);
-    setLoading(false);
-  };
-
+  }, [fetchData]);
   const handleSaveNavbar = async () => {
     setSaving(true);
-    const { error } = await supabase.from("navbar").upsert(navbarData);
+    const hasId = Boolean(navbarData.id && navbarData.id > 0);
+    const { error } = hasId
+      ? await supabase.from("navbar").update({
+          brand_name: navbarData.brand_name,
+          brand_gradient_text: navbarData.brand_gradient_text,
+          cta_text: navbarData.cta_text,
+          cta_link: navbarData.cta_link,
+        }).eq("id", navbarData.id as number)
+      : await supabase.from("navbar").insert({
+          brand_name: navbarData.brand_name,
+          brand_gradient_text: navbarData.brand_gradient_text,
+          cta_text: navbarData.cta_text,
+          cta_link: navbarData.cta_link,
+        });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -76,9 +96,30 @@ const NavbarAdmin = () => {
 
   const handleSaveLinks = async () => {
     setSaving(true);
-    const { error } = await supabase.from("nav_links").upsert(navLinks);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    const cleaned = navLinks.filter((l) => l.label.trim() !== "" && l.href.trim() !== "");
+    const inserts = cleaned.filter((l) => !l.id || l.id <= 0).map((l) => ({
+      label: l.label,
+      href: l.href,
+      display_order: l.display_order ?? 0,
+    }));
+    const updates = cleaned.filter((l) => l.id && l.id > 0);
+
+    const insertRes = inserts.length
+      ? await supabase.from("nav_links").insert(inserts)
+      : { error: null };
+    const updateResList = await Promise.all(
+      updates.map((l) =>
+        supabase
+          .from("nav_links")
+          .update({ label: l.label, href: l.href, display_order: l.display_order ?? 0 })
+          .eq("id", l.id as number),
+      ),
+    );
+    const updateError = updateResList.find((r) => r.error)?.error || null;
+
+    if (insertRes.error || updateError) {
+      const msg = insertRes.error?.message || updateError?.message || "Unknown error";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Navigation links updated" });
       fetchData();
@@ -167,10 +208,11 @@ const NavbarAdmin = () => {
                   <label className="text-sm font-medium">Order</label>
                   <Input 
                     type="number"
-                    value={link.display_order} 
+                    value={Number.isFinite(link.display_order) ? link.display_order : ""} 
                     onChange={(e) => {
                       const newLinks = [...navLinks];
-                      newLinks[idx].display_order = parseInt(e.target.value);
+                      const parsed = parseInt(e.target.value, 10);
+                      newLinks[idx].display_order = Number.isNaN(parsed) ? 0 : parsed;
                       setNavLinks(newLinks);
                     }} 
                   />

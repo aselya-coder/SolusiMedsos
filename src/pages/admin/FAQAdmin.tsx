@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,16 +21,21 @@ const FAQAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from("faq").select("*").order("display_order");
+    const { data, error } = await supabase.from("faq").select("*").order("display_order");
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
     if (data) setFaqs(data);
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAdd = () => {
     setFaqs([...faqs, { question: "", answer: "", display_order: faqs.length + 1 }]);
@@ -38,16 +43,39 @@ const FAQAdmin = () => {
 
   const handleRemove = async (index: number, id?: number) => {
     if (id) {
-      await supabase.from("faq").delete().eq("id", id);
+      const { error } = await supabase.from("faq").delete().eq("id", id);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
     }
     setFaqs(faqs.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase.from("faq").upsert(faqs);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    const cleaned = faqs.filter((f) => f.question.trim() !== "" && f.answer.trim() !== "");
+    const inserts = cleaned.filter((f) => !f.id || f.id <= 0).map((f) => ({
+      question: f.question,
+      answer: f.answer,
+      display_order: f.display_order ?? 0,
+    }));
+    const updates = cleaned.filter((f) => f.id && f.id > 0);
+
+    const insertRes = inserts.length ? await supabase.from("faq").insert(inserts) : { error: null };
+    const updateResList = await Promise.all(
+      updates.map((f) =>
+        supabase
+          .from("faq")
+          .update({ question: f.question, answer: f.answer, display_order: f.display_order ?? 0 })
+          .eq("id", f.id as number),
+      ),
+    );
+    const updateError = updateResList.find((r) => r.error)?.error || null;
+
+    if (insertRes.error || updateError) {
+      const msg = insertRes.error?.message || updateError?.message || "Unknown error";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "FAQ updated" });
       fetchData();
@@ -108,10 +136,11 @@ const FAQAdmin = () => {
                 <label className="text-sm font-medium">Order</label>
                 <Input 
                   type="number"
-                  value={faq.display_order} 
+                  value={Number.isFinite(faq.display_order) ? faq.display_order : ""} 
                   onChange={(e) => {
                     const newFaqs = [...faqs];
-                    newFaqs[idx].display_order = parseInt(e.target.value);
+                    const parsed = parseInt(e.target.value, 10);
+                    newFaqs[idx].display_order = Number.isNaN(parsed) ? 0 : parsed;
                     setFaqs(newFaqs);
                   }} 
                 />

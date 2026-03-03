@@ -45,11 +45,16 @@ const AboutAdmin = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: mainData } = await supabase.from("about_section").select("*").single();
+    const { data: mainData, error: aboutError } = await supabase.from("about_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+    if (aboutError) {
+      setLoading(false);
+    } else if (mainData) {
+      setAboutData(mainData);
+    }
     if (mainData) setAboutData(mainData);
 
-    const { data: advData } = await supabase.from("about_advantages").select("*").order("display_order");
-    if (advData) setAdvantages(advData);
+    const { data: advData, error: advError } = await supabase.from("about_advantages").select("*").order("display_order");
+    if (!advError && advData) setAdvantages(advData);
     setLoading(false);
   };
 
