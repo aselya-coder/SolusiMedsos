@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
-type ServiceRow = {
+type Service = {
   id?: number;
   title: string;
   description: string;
@@ -15,27 +15,36 @@ type ServiceRow = {
 };
 
 const ServicesSection = () => {
-  const [services, setServices] = useState<ServiceRow[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchServices = async () => {
-    setLoading(true);
-    const { data } = await supabase.from("services").select("*").order("display_order");
-    if (data) setServices(data as ServiceRow[]);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchServices();
-  }, []);
+    const fetchInitialServices = async () => {
+      setLoading(true);
+      const { data } = await supabase.from("services").select("*").order("display_order");
+      if (data) {
+        setServices(data as Service[]);
+      }
+      setLoading(false);
+    };
 
-  useEffect(() => {
+    fetchInitialServices();
+
     const channel = supabase
       .channel("services-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "services" }, () => {
-        fetchServices();
+      .on("postgres_changes", { event: "*", schema: "public", table: "services" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setServices((prev) => [...prev, payload.new as Service].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+        } else if (payload.eventType === "UPDATE") {
+          setServices((prev) =>
+            prev.map((service) => (service.id === (payload.new as Service).id ? (payload.new as Service) : service)).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          );
+        } else if (payload.eventType === "DELETE") {
+          setServices((prev) => prev.filter((service) => service.id !== (payload.old as Service).id));
+        }
       })
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
@@ -44,7 +53,6 @@ const ServicesSection = () => {
   return (
     <section id="services" className="py-20 lg:py-32 bg-muted/30">
       <div className="section-container">
-        {(() => { const _ = "6285646420488"; return null })()}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

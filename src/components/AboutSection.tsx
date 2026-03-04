@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Users, Target, Shield, BarChart3 } from "lucide-react";
+import { CheckCircle2, Shield, Target, BarChart3, Users } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
-type AboutRow = {
+const iconMap: { [key: string]: React.ElementType } = {
+  Users,
+  Target,
+  Shield,
+  BarChart3,
+  CheckCircle2,
+};
+
+type AboutData = {
   id?: number;
   badge_text: string;
   title_part1: string;
@@ -13,33 +22,55 @@ type AboutRow = {
   image_url?: string;
 };
 
-type AdvantageRow = { id?: number; icon_name: string; text: string; display_order: number };
+type Advantage = { id?: number; icon_name: string; text: string; display_order: number };
 
 const AboutSection = () => {
-  const [about, setAbout] = useState<AboutRow | null>(null);
-  const [advantages, setAdvantages] = useState<AdvantageRow[]>([]);
+  const [about, setAbout] = useState<AboutData | null>(null);
+  const [advantages, setAdvantages] = useState<Advantage[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: aboutData } = await supabase
-        .from("about_section")
-        .select("*")
-        .order("id", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      const { data: advData } = await supabase.from("about_advantages").select("*").order("display_order");
-      if (aboutData) setAbout(aboutData as AboutRow);
-      if (advData) setAdvantages(advData as AdvantageRow[]);
+    const fetchAboutData = async () => {
+      const { data } = await supabase.from("about_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+      if (data) setAbout(data);
     };
-    fetchData();
 
-    const channel = supabase
-      .channel("about-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "about_section" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "about_advantages" }, () => fetchData())
+    const fetchAdvantages = async () => {
+      const { data } = await supabase.from("about_advantages").select("*").order("display_order");
+      if (data) setAdvantages(data);
+    };
+
+    fetchAboutData();
+    fetchAdvantages();
+
+    const aboutSubscription = supabase
+      .channel("about_section_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "about_section" }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          setAbout(payload.new as AboutData);
+        } else if (payload.eventType === "DELETE") {
+          setAbout(null);
+        }
+      })
       .subscribe();
+
+    const advantagesSubscription = supabase
+      .channel("about_advantages_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "about_advantages" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setAdvantages((prev) => [...prev, payload.new as Advantage].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+        } else if (payload.eventType === "UPDATE") {
+          setAdvantages((prev) =>
+            prev.map((adv) => (adv.id === (payload.new as Advantage).id ? (payload.new as Advantage) : adv)).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          );
+        } else if (payload.eventType === "DELETE") {
+          setAdvantages((prev) => prev.filter((adv) => adv.id !== (payload.old as Advantage).id));
+        }
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(aboutSubscription);
+      supabase.removeChannel(advantagesSubscription);
     };
   }, []);
 
@@ -75,24 +106,22 @@ const AboutSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
-            {advantages.map((item, i) => (
-              <motion.div
-                key={item.text}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 * i }}
-                className="card-gradient rounded-lg p-6 border border-border hover-lift"
-              >
-                {{
-                  Users: <Users className="h-8 w-8 text-primary mb-4" />,
-                  Target: <Target className="h-8 w-8 text-primary mb-4" />,
-                  Shield: <Shield className="h-8 w-8 text-primary mb-4" />,
-                  BarChart3: <BarChart3 className="h-8 w-8 text-primary mb-4" />,
-                }[item.icon_name] ?? <CheckCircle2 className="h-8 w-8 text-primary mb-4" />}
-                <h3 className="font-heading font-semibold text-foreground">{item.text}</h3>
-              </motion.div>
-            ))}
+            {advantages.map((item, i) => {
+              const Icon = iconMap[item.icon_name] || CheckCircle2;
+              return (
+                <motion.div
+                  key={item.id || i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * i }}
+                  className="card-gradient rounded-lg p-6 border border-border hover-lift"
+                >
+                  <Icon className="h-8 w-8 text-primary mb-4" />
+                  <h3 className="font-heading font-semibold text-foreground">{item.text}</h3>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </div>

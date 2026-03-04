@@ -1,119 +1,147 @@
 import { useEffect, useState } from "react";
-import { Mail, Instagram, MessageCircle } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
-type FooterRow = {
+type FooterData = {
   id?: number;
-  brand_name_part1: string;
-  brand_name_part2: string;
+  brand_name: string;
+  brand_gradient_text: string;
   description: string;
+  phone: string;
+  email: string;
+  address: string;
   copyright_text: string;
-  email: string | null;
-  phone: string | null;
-  instagram_username: string | null;
 };
 
-type FooterLinkRow = { id?: number; label: string; href: string; category: string; display_order: number };
+type FooterLink = { id?: number; label: string; href: string; category: string; display_order: number };
 
 const FooterSection = () => {
-  const [footer, setFooter] = useState<FooterRow | null>(null);
-  const [links, setLinks] = useState<FooterLinkRow[]>([]);
+  const [footer, setFooter] = useState<FooterData | null>(null);
+  const [links, setLinks] = useState<FooterLink[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: f } = await supabase.from("footer").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
-      const { data: l } = await supabase.from("footer_links").select("*").order("display_order");
-      if (f) setFooter(f as FooterRow);
-      if (l) setLinks(l as FooterLinkRow[]);
+    const fetchFooterData = async () => {
+      const { data } = await supabase.from("footer").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+      if (data) setFooter(data);
     };
-    fetchData();
 
-    const channel = supabase
-      .channel("footer-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "footer" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "footer_links" }, () => fetchData())
+    const fetchLinks = async () => {
+      const { data } = await supabase.from("footer_links").select("*").order("display_order");
+      if (data) setLinks(data);
+    };
+
+    fetchFooterData();
+    fetchLinks();
+
+    const footerSubscription = supabase
+      .channel("footer_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "footer" }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          setFooter(payload.new as FooterData);
+        } else if (payload.eventType === "DELETE") {
+          setFooter(null);
+        }
+      })
       .subscribe();
+
+    const linksSubscription = supabase
+      .channel("footer_links_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "footer_links" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setLinks((prev) => [...prev, payload.new as FooterLink].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+        } else if (payload.eventType === "UPDATE") {
+          setLinks((prev) =>
+            prev.map((link) => (link.id === (payload.new as FooterLink).id ? (payload.new as FooterLink) : link)).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          );
+        } else if (payload.eventType === "DELETE") {
+          setLinks((prev) => prev.filter((link) => link.id !== (payload.old as FooterLink).id));
+        }
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(footerSubscription);
+      supabase.removeChannel(linksSubscription);
     };
   }, []);
 
-  const navLinks = links.filter((l) => l.category.toLowerCase() === "navigasi");
-  const serviceLinks = links.filter((l) => l.category.toLowerCase() === "layanan");
-  const navLinksFallback = [
-    { label: "Tentang Kami", href: "#about" },
+  const defaultNavLinks = [
+    { label: "Beranda", href: "#hero" },
+    { label: "Tentang", href: "#about" },
     { label: "Layanan", href: "#services" },
     { label: "Harga", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
-  ];
-  const serviceLinksFallback = [
-    { label: "Buzzer Twitter/X", href: "#" },
-    { label: "Buzzer Instagram", href: "#" },
-    { label: "Buzzer TikTok", href: "#" },
-    { label: "Campaign Politik", href: "#" },
   ];
 
+  const defaultServiceLinks = [
+    { label: "Buzzer Campaign", href: "#services" },
+    { label: "Trending Topic", href: "#services" },
+    { label: "Manajemen Opini", href: "#services" },
+    { label: "Personal Branding", href: "#services" },
+  ];
+
+  const navLinks = links.filter((l) => l.category === "Navigasi");
+  const serviceLinks = links.filter((l) => l.category === "Layanan");
+
+  const displayedNavLinks = navLinks.length > 0 ? navLinks : defaultNavLinks;
+  const displayedServiceLinks = serviceLinks.length > 0 ? serviceLinks : defaultServiceLinks;
+
   return (
-    <footer className="border-t border-border py-16">
-      <div className="section-container">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div>
-            <div className="font-heading text-xl font-bold mb-4">
-              <span className="gradient-text">{footer?.brand_name_part1 || "Solusi"}</span>
-              <span className="text-foreground">{footer?.brand_name_part2 || "Medsos"}</span>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {footer?.description ||
-                "Agency jasa buzzer & social media campaign terpercaya di Indonesia. Solusi digital marketing untuk brand, politik, dan personal branding."}
+    <footer className="bg-muted/20 border-t border-border">
+      <div className="section-container py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand & Desc */}
+          <div className="md:col-span-2">
+            <a href="#hero" className="font-heading text-2xl font-bold">
+              <span className="gradient-text">{footer?.brand_name || "Solusi"}</span>
+              <span className="text-foreground">{footer?.brand_gradient_text || "Medsos"}</span>
+            </a>
+            <p className="text-muted-foreground mt-4 max-w-sm">
+              {footer?.description || "Agency buzzer & campaign sosial media terpercaya di Indonesia."}
             </p>
           </div>
 
+          {/* Navigasi */}
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Navigasi</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {(navLinks.length > 0 ? navLinks : navLinksFallback).map((l, idx) => (
-                <li key={`${idx}-${l.label}`}>
-                  <a href={l.href} className="hover:text-primary transition-colors">{l.label}</a>
+            <ul className="space-y-2">
+              {displayedNavLinks.map((l, i) => (
+                <li key={l.id || i}>
+                  <a href={l.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {l.label}
+                  </a>
                 </li>
               ))}
             </ul>
           </div>
 
+          {/* Layanan */}
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Layanan</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {(serviceLinks.length > 0 ? serviceLinks : serviceLinksFallback).map((l, idx) => (
-                <li key={`${idx}-${l.label}`}>
-                  <a href={l.href} className="hover:text-primary transition-colors">{l.label}</a>
+            <ul className="space-y-2">
+              {displayedServiceLinks.map((l, i) => (
+                <li key={l.id || i}>
+                  <a href={l.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {l.label}
+                  </a>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-heading font-semibold text-foreground mb-4">Kontak</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-primary" />
-                <a href="https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20bertanya%20lebih%20lanjut." target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">WhatsApp</a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>{footer?.email || "info@solusimedsos.id"}</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-primary" />
-                <span>{footer?.instagram_username ? `@${footer.instagram_username}` : "@solusimedsos"}</span>
-              </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-border mt-12 pt-8 text-center">
-          <p className="text-xs text-muted-foreground">
-            {footer?.copyright_text ||
-              "© 2025 SolusiMedsos. All rights reserved. Disclaimer: Semua layanan yang kami berikan bersifat profesional dan bertanggung jawab."}
+        {/* Bottom */}
+        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            {footer?.copyright_text || "© 2024 SolusiMedsos. All rights reserved."}
           </p>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <a href={`https://wa.me/${(footer?.phone || "6285646420488").replace(/\D/g, "")}?text=Halo%20SolusiMedsos`} target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+              {footer?.phone || "+62 856-4642-0488"}
+            </a>
+            <span>|</span>
+            <a href={`mailto:${footer?.email || "kontak@solusimedsos.com"}`} className="hover:text-primary">
+              {footer?.email || "kontak@solusimedsos.com"}
+            </a>
+          </div>
         </div>
       </div>
     </footer>

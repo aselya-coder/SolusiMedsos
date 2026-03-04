@@ -1,26 +1,48 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { supabase } from "@/lib/supabaseClient";
 
-type FAQRow = { id?: number; question: string; answer: string; display_order: number };
+type FAQ = {
+  id?: number;
+  question: string;
+  answer: string;
+  display_order: number;
+};
 
 const FAQSection = () => {
-  const [faqs, setFaqs] = useState<FAQRow[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFaqs = async () => {
       const { data } = await supabase.from("faq").select("*").order("display_order").limit(4);
-      if (data) setFaqs(data as FAQRow[]);
+      if (data) setFaqs(data);
     };
-    fetchData();
 
-    const channel = supabase
-      .channel("faq-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "faq" }, () => fetchData())
+    fetchFaqs();
+
+    const faqsSubscription = supabase
+      .channel("faq_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "faq" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setFaqs((prev) => [...prev, payload.new as FAQ].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).slice(0, 4));
+        } else if (payload.eventType === "UPDATE") {
+          setFaqs((prev) =>
+            prev.map((faq) => (faq.id === (payload.new as FAQ).id ? (payload.new as FAQ) : faq)).sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).slice(0, 4)
+          );
+        } else if (payload.eventType === "DELETE") {
+          setFaqs((prev) => prev.filter((faq) => faq.id !== (payload.old as FAQ).id));
+        }
+      })
       .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(faqsSubscription);
     };
   }, []);
 
@@ -39,32 +61,32 @@ const FAQSection = () => {
           </h2>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          {faqs.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">Belum ada FAQ</div>
-          ) : (
-          <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((faq, i) => (
-              <AccordionItem
-                key={`${faq.id ?? i}`}
-                value={`item-${i}`}
-                className="card-gradient border border-border rounded-lg px-6"
-              >
-                <AccordionTrigger className="text-foreground font-heading font-semibold hover:text-primary text-left">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-          )}
-        </motion.div>
+        {faqs.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Accordion type="single" collapsible className="space-y-3">
+              {faqs.map((faq, i) => (
+                <AccordionItem
+                  key={faq.id || i}
+                  value={`item-${i}`}
+                  className="card-gradient border border-border rounded-lg px-6"
+                >
+                  <AccordionTrigger className="text-foreground font-heading font-semibold hover:text-primary text-left">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
+        ) : (
+          <div className="text-center text-muted-foreground">Belum ada FAQ yang tersedia.</div>
+        )}
       </div>
     </section>
   );

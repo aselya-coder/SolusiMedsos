@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,11 +42,7 @@ const HeroAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
 
     const { data, error } = await supabase
@@ -72,7 +68,11 @@ const HeroAdmin = () => {
     }
 
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async () => {
     if (!heroData.id) {

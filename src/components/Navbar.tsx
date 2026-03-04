@@ -4,7 +4,14 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
-type NavbarRow = {
+type NavLinkData = {
+  id?: number;
+  label: string;
+  href: string;
+  display_order: number;
+};
+
+type NavbarData = {
   id?: number;
   brand_name: string;
   brand_gradient_text: string;
@@ -12,61 +19,82 @@ type NavbarRow = {
   cta_link: string;
 };
 
-type NavLinkRow = {
-  id?: number;
-  label: string;
-  href: string;
-  display_order: number;
-};
-
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [navbar, setNavbar] = useState<NavbarRow | null>(null);
-  const [links, setLinks] = useState<NavLinkRow[]>([]);
-  const defaultLinks: NavLinkRow[] = [
-    { label: "Beranda", href: "#hero", display_order: 1 },
-    { label: "Tentang", href: "#about", display_order: 2 },
-    { label: "Layanan", href: "#services", display_order: 3 },
-    { label: "Harga", href: "#pricing", display_order: 4 },
-    { label: "Cara Kerja", href: "#how-it-works", display_order: 5 },
-    { label: "Testimoni", href: "#testimonials", display_order: 6 },
-    { label: "FAQ", href: "#faq", display_order: 7 },
-  ];
-
-  const fetchData = async () => {
-    const { data: navData } = await supabase.from("navbar").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
-    const { data: linksData } = await supabase.from("nav_links").select("*").order("display_order");
-    if (navData) setNavbar(navData as NavbarRow);
-    if (linksData) setLinks(linksData as NavLinkRow[]);
-  };
+  const [navbarData, setNavbarData] = useState<NavbarData | null>(null);
+  const [navLinks, setNavLinks] = useState<NavLinkData[]>([]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const fetchNavbarData = async () => {
+      const { data } = await supabase.from("navbar").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+      if (data) setNavbarData(data);
+    };
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("navbar-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "navbar" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "nav_links" }, () => fetchData())
+    const fetchNavLinks = async () => {
+      const { data } = await supabase.from("nav_links").select("*").order("display_order");
+      if (data) setNavLinks(data);
+    };
+
+    fetchNavbarData();
+    fetchNavLinks();
+
+    const navbarSubscription = supabase
+      .channel("navbar_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "navbar" }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          setNavbarData(payload.new as NavbarData);
+        } else if (payload.eventType === "DELETE") {
+          setNavbarData(null);
+        }
+      })
       .subscribe();
+
+    const navLinksSubscription = supabase
+      .channel("nav_links_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "nav_links" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setNavLinks((prev) => [...prev, payload.new as NavLinkData].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+        } else if (payload.eventType === "UPDATE") {
+          setNavLinks((prev) =>
+            prev.map((link) => (link.id === (payload.new as NavLinkData).id ? (payload.new as NavLinkData) : link)).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          );
+        } else if (payload.eventType === "DELETE") {
+          setNavLinks((prev) => prev.filter((link) => link.id !== (payload.old as NavLinkData).id));
+        }
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(navbarSubscription);
+      supabase.removeChannel(navLinksSubscription);
     };
   }, []);
+
+  const defaultNavLinks = [
+    { label: "Beranda", href: "#hero" },
+    { label: "Tentang", href: "#about" },
+    { label: "Layanan", href: "#services" },
+    { label: "Harga", href: "#pricing" },
+    { label: "Cara Kerja", href: "#how-it-works" },
+    { label: "Testimoni", href: "#testimonials" },
+    { label: "FAQ", href: "#faq" },
+  ];
+
+  const displayedNavLinks = navLinks.length > 0 ? navLinks : defaultNavLinks;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
       <div className="section-container flex items-center justify-between h-16 lg:h-20">
         <a href="#hero" className="font-heading text-xl lg:text-2xl font-bold">
-          <span className="gradient-text">{navbar?.brand_name ?? "Solusi"}</span>
-          <span className="text-foreground">{navbar?.brand_gradient_text ?? "Medsos"}</span>
+          <span className="gradient-text">{navbarData?.brand_name || "Solusi"}</span>
+          <span className="text-foreground">{navbarData?.brand_gradient_text || "Medsos"}</span>
         </a>
 
+        {/* Desktop */}
         <div className="hidden lg:flex items-center gap-8">
-          {(links.length > 0 ? links : defaultLinks).map((link) => (
+          {displayedNavLinks.map((link, i) => (
             <a
-              key={link.href}
+              key={link.id || i}
               href={link.href}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
@@ -78,12 +106,13 @@ const Navbar = () => {
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
-            <a href={`https://wa.me/6285646420488?text=${encodeURIComponent(navbar?.cta_text ? `Halo SolusiMedsos, saya ingin ${navbar.cta_text.toLowerCase()}` : "Halo SolusiMedsos, saya ingin konsultasi")}`} target="_blank" rel="noopener noreferrer">
-              {navbar?.cta_text || "Konsultasi Gratis"}
+            <a href={navbarData?.cta_link || "https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi."} target="_blank" rel="noopener noreferrer">
+              {navbarData?.cta_text || "Konsultasi Gratis"}
             </a>
           </Button>
         </div>
 
+        {/* Mobile toggle */}
         <button
           className="lg:hidden text-foreground"
           onClick={() => setIsOpen(!isOpen)}
@@ -92,6 +121,7 @@ const Navbar = () => {
         </button>
       </div>
 
+      {/* Mobile menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -101,9 +131,9 @@ const Navbar = () => {
             className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
             <div className="section-container py-4 flex flex-col gap-4">
-              {(links.length > 0 ? links : defaultLinks).map((link) => (
+              {displayedNavLinks.map((link, i) => (
                 <a
-                  key={link.href}
+                  key={link.id || i}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   className="text-muted-foreground hover:text-foreground transition-colors py-2"
@@ -115,8 +145,8 @@ const Navbar = () => {
                 asChild
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold w-full"
               >
-                <a href={(navbar?.cta_link || "https://wa.me/6281234567890")} target="_blank" rel="noopener noreferrer">
-                  {navbar?.cta_text || "Konsultasi Gratis"}
+                <a href={navbarData?.cta_link || "https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20konsultasi%20gratis."} target="_blank" rel="noopener noreferrer">
+                  {navbarData?.cta_text || "Konsultasi Gratis"}
                 </a>
               </Button>
             </div>

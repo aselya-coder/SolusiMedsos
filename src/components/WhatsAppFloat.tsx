@@ -1,47 +1,59 @@
 import { useEffect, useState } from "react";
-import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { MessageCircle } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
+type WhatsAppSettings = {
+  id?: number;
+  phone_number: string;
+  default_message: string;
+  is_active: boolean;
+};
+
 const WhatsAppFloat = () => {
-  const [phone, setPhone] = useState<string>("6281234567890");
-  const [message, setMessage] = useState<string>("Halo SolusiMedsos, saya butuh bantuan.");
+  const [settings, setSettings] = useState<WhatsAppSettings | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase.from("whatsapp_settings").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
-      if (data?.phone_number) setPhone(data.phone_number);
-      if (data?.default_message) setMessage(data.default_message);
+      if (data) setSettings(data);
     };
-    fetchData();
 
-    const channel = supabase
-      .channel("whatsapp-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_settings" }, () => fetchData())
+    fetchSettings();
+
+    const settingsSubscription = supabase
+      .channel("whatsapp_settings_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_settings" }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          setSettings(payload.new as WhatsAppSettings);
+        } else if (payload.eventType === "DELETE") {
+          setSettings(null);
+        }
+      })
       .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(settingsSubscription);
     };
   }, []);
 
-  const waUrl = `https://wa.me/6285646420488?text=${encodeURIComponent(message)}`;
+  if (!settings?.is_active) return null;
+
+  const phoneNumber = (settings?.phone_number || "6285646420488").replace(/\D/g, "");
+  const message = encodeURIComponent(settings?.default_message || "Halo SolusiMedsos, saya ingin bertanya lebih lanjut.");
 
   return (
     <motion.a
-      href={waUrl}
+      href={`https://wa.me/${phoneNumber}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full p-4 shadow-lg transition-colors flex items-center gap-2 group"
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ delay: 1, type: "spring" }}
-      whileHover={{ scale: 1.1 }}
-      aria-label="Chat WhatsApp"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg flex items-center justify-center"
     >
-      <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 whitespace-nowrap font-medium text-sm">
-        Butuh Bantuan?
-      </span>
-      <MessageCircle className="h-6 w-6" />
+      <MessageCircle className="h-7 w-7" />
     </motion.a>
   );
 };

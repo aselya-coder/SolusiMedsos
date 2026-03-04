@@ -4,40 +4,41 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
+type CtaData = {
+  id?: number;
+  title_part1: string;
+  title_gradient: string;
+  description: string;
+  primary_btn_text: string;
+  primary_btn_link: string;
+  secondary_btn_text: string;
+  secondary_btn_link: string;
+};
+
 const CTASection = () => {
-  const [cta, setCta] = useState<{
-    title_part1: string;
-    title_gradient: string;
-    description: string;
-    primary_btn_text: string;
-    primary_btn_link: string;
-    secondary_btn_text: string;
-    secondary_btn_link: string;
-  } | null>(null);
+  const [cta, setCta] = useState<CtaData | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCtaData = async () => {
       const { data } = await supabase.from("cta_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
-      if (data) {
-        setCta({
-          title_part1: data.title_part1,
-          title_gradient: data.title_gradient,
-          description: data.description,
-          primary_btn_text: data.primary_btn_text,
-          primary_btn_link: data.primary_btn_link,
-          secondary_btn_text: data.secondary_btn_text,
-          secondary_btn_link: data.secondary_btn_link,
-        });
-      }
+      if (data) setCta(data);
     };
-    fetchData();
 
-    const channel = supabase
-      .channel("cta-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "cta_section" }, () => fetchData())
+    fetchCtaData();
+
+    const ctaSubscription = supabase
+      .channel("cta_section_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "cta_section" }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          setCta(payload.new as CtaData);
+        } else if (payload.eventType === "DELETE") {
+          setCta(null);
+        }
+      })
       .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(ctaSubscription);
     };
   }, []);
 
@@ -63,7 +64,7 @@ const CTASection = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-10 animate-pulse-glow"
             >
-              <a href={`https://wa.me/6285646420488?text=${encodeURIComponent(cta?.primary_btn_text ? `Halo SolusiMedsos, saya ingin ${cta.primary_btn_text.toLowerCase()}` : "Halo SolusiMedsos, saya ingin membuat campaign viral.")}`} target="_blank" rel="noopener noreferrer">
+              <a href={cta?.primary_btn_link || `https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.primary_btn_text?.toLowerCase() || 'membuat campaign viral')}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="mr-2 h-5 w-5" />
                 {cta?.primary_btn_text || "Hubungi Kami via WhatsApp"}
               </a>
@@ -74,7 +75,7 @@ const CTASection = () => {
               size="lg"
               className="border-border text-foreground hover:bg-muted font-semibold text-lg px-10"
             >
-              <a href={`https://wa.me/6285646420488?text=${encodeURIComponent(cta?.secondary_btn_text ? `Halo SolusiMedsos, saya ingin ${cta.secondary_btn_text.toLowerCase()}` : "Halo SolusiMedsos, saya ingin konsultasi.")}`} target="_blank" rel="noopener noreferrer">
+              <a href={cta?.secondary_btn_link || `https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.secondary_btn_text?.toLowerCase() || 'konsultasi')}`} target="_blank" rel="noopener noreferrer">
                 {cta?.secondary_btn_text || "Konsultasi Gratis"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
