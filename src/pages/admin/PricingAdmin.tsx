@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,11 +31,7 @@ const PricingAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
 
     const { data: plansData, error: plansError } = await supabase
@@ -69,7 +65,11 @@ const PricingAdmin = () => {
     }
 
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAddPlan = () => {
     setPlans([
@@ -175,10 +175,11 @@ const PricingAdmin = () => {
       });
 
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: "Error",
-        description: err.message,
+        description: message,
         variant: "destructive",
       });
     }

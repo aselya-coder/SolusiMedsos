@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,7 @@ const TestimonialsAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
 
     const { data, error } = await supabase
@@ -47,7 +43,11 @@ const TestimonialsAdmin = () => {
     if (data) setTestimonials(data);
 
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAdd = () => {
     setTestimonials([
@@ -75,10 +75,11 @@ const TestimonialsAdmin = () => {
 
       setTestimonials(testimonials.filter((_, i) => i !== index));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         title: "Delete Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     }
@@ -92,7 +93,13 @@ const TestimonialsAdmin = () => {
       // DATA BARU
       const inserts = testimonials
         .filter((t) => !t.id)
-        .map(({ id, ...rest }) => rest);
+        .map((t) => ({
+          name: t.name,
+          company: t.company,
+          content: t.content,
+          rating: t.rating,
+          display_order: t.display_order,
+        }));
 
       // DATA LAMA
       const updates = testimonials.filter((t) => t.id);
@@ -125,11 +132,12 @@ const TestimonialsAdmin = () => {
 
       fetchData();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
 
       toast({
         title: "Save Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
 

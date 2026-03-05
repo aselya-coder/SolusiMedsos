@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,16 +25,13 @@ const WhatsAppAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
 
     const { data, error } = await supabase
       .from("whatsapp_settings")
       .select("*")
+      .order("id", { ascending: true })
       .limit(1)
       .maybeSingle();
 
@@ -47,17 +44,34 @@ const WhatsAppAdmin = () => {
     }
 
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async () => {
     setSaving(true);
 
-    // hapus id supaya tidak error identity column
-    const { id, ...dataWithoutId } = wsData;
-
-    const { error } = await supabase
-      .from("whatsapp_settings")
-      .upsert(dataWithoutId);
+    let error: { message: string } | null = null;
+    if (wsData.id) {
+      const res = await supabase
+        .from("whatsapp_settings")
+        .update({
+          phone_number: wsData.phone_number,
+          default_message: wsData.default_message,
+          button_text: wsData.button_text,
+        })
+        .eq("id", wsData.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from("whatsapp_settings").insert({
+        phone_number: wsData.phone_number,
+        default_message: wsData.default_message,
+        button_text: wsData.button_text,
+      });
+      error = res.error;
+    }
 
     if (error) {
       console.error(error);
@@ -67,6 +81,7 @@ const WhatsAppAdmin = () => {
         variant: "destructive"
       });
     } else {
+      await fetchData();
       toast({
         title: "Success",
         description: "WhatsApp settings updated"

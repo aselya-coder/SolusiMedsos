@@ -15,7 +15,12 @@ const WhatsAppFloat = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase.from("whatsapp_settings").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("whatsapp_settings")
+        .select("*")
+        .order("id", { ascending: true })
+        .limit(1)
+        .maybeSingle();
       if (data) setSettings(data);
     };
 

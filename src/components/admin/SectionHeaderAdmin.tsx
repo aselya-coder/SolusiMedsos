@@ -95,11 +95,12 @@ export const SectionHeaderAdmin = ({ sectionKey }: SectionHeaderProps) => {
 
       fetchHeader();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
 
       toast({
         title: "Save Error",
-        description: err.message,
+        description: message,
         variant: "destructive"
       });
 
