@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Shield, Target, BarChart3, Users } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -30,17 +29,24 @@ const AboutSection = () => {
 
   useEffect(() => {
     const fetchAboutData = async () => {
-      const { data } = await supabase.from("about_section").select("*").order("id", { ascending: true }).limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("about_section")
+        .select("*")
+        .order("id", { ascending: true })
+        .limit(1)
+        .maybeSingle();
       if (data) setAbout(data);
     };
 
     const fetchAdvantages = async () => {
-      const { data } = await supabase.from("about_advantages").select("*").order("display_order");
+      const { data } = await supabase
+        .from("about_advantages")
+        .select("*")
+        .order("display_order");
       if (data) setAdvantages(data);
     };
 
-    fetchAboutData();
-    fetchAdvantages();
+    Promise.all([fetchAboutData(), fetchAdvantages()]);
 
     const aboutSubscription = supabase
       .channel("about_section_changes")

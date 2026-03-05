@@ -13,16 +13,44 @@ type Plan = {
   features: { feature: string }[];
 };
 
+type PricingRow = {
+  id: number;
+  name: string;
+  price: string;
+  is_popular: boolean;
+  display_order: number;
+};
+
+type FeatureRow = {
+  pricing_id: number;
+  feature: string;
+  display_order: number;
+};
+
 const PricingSection = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
 
   useEffect(() => {
     const fetchPlans = async () => {
-      const { data } = await supabase
-        .from("pricing")
-        .select("*, features:pricing_features(feature)")
-        .order("display_order");
-      if (data) setPlans(data as unknown as Plan[]);
+      const [plansRes, featuresRes] = await Promise.all([
+        supabase.from("pricing").select("*").order("display_order"),
+        supabase.from("pricing_features").select("pricing_id, feature, display_order").order("display_order"),
+      ]);
+      const plansData = plansRes.data;
+      const featuresData = featuresRes.data;
+
+      if (plansData) {
+        const grouped: Record<number, { feature: string }[]> = {};
+        (featuresData || []).forEach((f: FeatureRow) => {
+          if (!grouped[f.pricing_id]) grouped[f.pricing_id] = [];
+          grouped[f.pricing_id].push({ feature: f.feature });
+        });
+        const merged: Plan[] = (plansData as PricingRow[]).map((p) => ({
+          ...p,
+          features: grouped[p.id] || [],
+        }));
+        setPlans(merged);
+      }
     };
 
     fetchPlans();

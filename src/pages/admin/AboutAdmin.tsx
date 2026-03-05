@@ -133,10 +133,11 @@ const AboutAdmin = () => {
       await handleSaveAdvantages();
       toast({ title: "Success", description: "About section updated" });
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
         title: "Error",
-        description: err.message,
+        description: message,
         variant: "destructive"
       });
     } finally {

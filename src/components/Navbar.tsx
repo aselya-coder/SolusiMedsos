@@ -94,12 +94,12 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center gap-8">
           {displayedNavLinks.map((link, i) => (
             <a
-              key={link.id || i}
+              key={`${link.href}-${i}`}
               href={link.href}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               {link.label}
-            </a>
+            </a> 
           ))}
           <Button
             asChild
@@ -133,7 +133,7 @@ const Navbar = () => {
             <div className="section-container py-4 flex flex-col gap-4">
               {displayedNavLinks.map((link, i) => (
                 <a
-                  key={link.id || i}
+                  key={`${link.href}-${i}`}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   className="text-muted-foreground hover:text-foreground transition-colors py-2"
