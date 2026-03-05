@@ -161,10 +161,11 @@ const HeroSection = () => {
           >
             <Button asChild size="lg" className="px-8">
               <a
-                href={
-                  hero?.primary_btn_link ||
-                  "https://wa.me/6285646420488"
-                }
+                href={`https://wa.me/6285646420488?text=${encodeURIComponent(
+                  `Halo SolusiMedsos, saya ingin ${(
+                    hero?.primary_btn_text?.toLowerCase() || "konsultasi"
+                  )}`,
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

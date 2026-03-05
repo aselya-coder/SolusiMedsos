@@ -64,7 +64,7 @@ const CTASection = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-10 animate-pulse-glow"
             >
-              <a href={cta?.primary_btn_link || `https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.primary_btn_text?.toLowerCase() || 'membuat campaign viral')}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.primary_btn_text?.toLowerCase() || 'membuat campaign viral')}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="mr-2 h-5 w-5" />
                 {cta?.primary_btn_text || "Hubungi Kami via WhatsApp"}
               </a>
@@ -75,7 +75,7 @@ const CTASection = () => {
               size="lg"
               className="border-border text-foreground hover:bg-muted font-semibold text-lg px-10"
             >
-              <a href={cta?.secondary_btn_link || `https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.secondary_btn_text?.toLowerCase() || 'konsultasi')}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/6285646420488?text=Halo%20SolusiMedsos,%20saya%20ingin%20${encodeURIComponent(cta?.secondary_btn_text?.toLowerCase() || 'konsultasi')}`} target="_blank" rel="noopener noreferrer">
                 {cta?.secondary_btn_text || "Konsultasi Gratis"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
